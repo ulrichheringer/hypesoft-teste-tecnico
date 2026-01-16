@@ -26,6 +26,20 @@ public class Product
         CategoryId = categoryId;
     }
 
+    public void Update(
+        string name,
+        string description,
+        decimal price,
+        int stock,
+        Guid categoryId)
+    {
+        Name = name;
+        Description = description;
+        Price = price;
+        Stock = stock;
+        CategoryId = categoryId;
+    }
+
     public void UpdateStock(int stock)
     {
         Stock = stock;
