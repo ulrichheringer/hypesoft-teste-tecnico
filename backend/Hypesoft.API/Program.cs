@@ -60,8 +60,7 @@ builder.Services.AddDbContext<HypesoftDbContext>(options =>
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly));
+builder.Services.AddMediatR(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly);
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(Hypesoft.Application.Validators.Categories.CreateCategoryRequestValidator).Assembly);
@@ -86,6 +85,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformation>();
+builder.Services.AddHostedService<JwtBearerWarmupService>();
 
 var app = builder.Build();
 
