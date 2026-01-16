@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
+        <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
         <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -16,10 +17,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Hypesoft.Application\Hypesoft.Application.csproj" />
       <ProjectReference Include="..\Hypesoft.Infrastructure\Hypesoft.Infrastructure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Controllers\" />
     </ItemGroup>
 
 </Project>
