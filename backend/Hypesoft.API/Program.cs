@@ -12,6 +12,7 @@ using Scalar;
 using Hypesoft.API.Auth;
 using Hypesoft.API.OpenApi;
 using Hypesoft.API.Middlewares;
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
@@ -37,6 +38,15 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<KeycloakSecurityDocumentTransformer>();
 });
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddOptions();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
 // DbContext MongoDB EF Core Provider
 var mongoConn = builder.Configuration["Mongo:ConnectionString"]!;
@@ -86,10 +96,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

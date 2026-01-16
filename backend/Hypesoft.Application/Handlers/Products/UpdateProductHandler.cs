@@ -18,7 +18,7 @@ public sealed class UpdateProductHandler(IProductRepository products, ICategoryR
 
         var category = await categories.GetByIdAsync(request.Request.CategoryId, ct);
         if (category is null)
-            throw new InvalidOperationException("Category not found.");
+            throw new KeyNotFoundException("Category not found.");
 
         product.Update(
             name,
