@@ -22,6 +22,19 @@ services:
       ME_CONFIG_MONGODB_SERVER: mongodb
       ME_CONFIG_BASICAUTH: "false"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.5
+    container_name: hypesoft-keycloak
+    restart: unless-stopped
+    command: start-dev --http-port=8080
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
 volumes:
   mongo_data:
-
+  keycloak_data:
