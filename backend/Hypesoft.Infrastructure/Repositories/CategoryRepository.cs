@@ -10,8 +10,30 @@ public sealed class CategoryRepository(HypesoftDbContext db) : ICategoryReposito
     public Task<Category?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => db.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
 
-    public async Task<IReadOnlyList<Category>> ListAsync(CancellationToken ct = default)
-        => await db.Categories.AsNoTracking().OrderBy(x => x.Name).ToListAsync(ct);
+    public async Task<(IReadOnlyList<Category> Items, long Total)> ListAsync(
+        int page,
+        int pageSize,
+        string? search,
+        CancellationToken ct = default)
+    {
+        var query = db.Categories.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalized = search.Trim().ToLowerInvariant();
+            query = query.Where(x => x.Name.ToLower().Contains(normalized));
+        }
+
+        var total = await query.LongCountAsync(ct);
+
+        var items = await query
+            .OrderBy(x => x.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return (items, total);
+    }
 
     public async Task AddAsync(Category category, CancellationToken ct = default)
     {
