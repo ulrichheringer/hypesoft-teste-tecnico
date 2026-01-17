@@ -27,14 +27,14 @@ public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache ca
 
     private async Task<long> GetStampAsync(CancellationToken ct)
     {
-        var stampValue = await cache.GetStringAsync(StampKey, ct);
+        var stampValue = await cache.GetStringSafeAsync(StampKey, ct);
         if (long.TryParse(stampValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var stamp))
         {
             return stamp;
         }
 
         stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        await cache.SetStringAsync(
+        await cache.SetStringSafeAsync(
             StampKey,
             stamp.ToString(CultureInfo.InvariantCulture),
             CacheOptions,
@@ -43,7 +43,7 @@ public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache ca
     }
 
     private Task BumpStampAsync(CancellationToken ct)
-        => cache.SetStringAsync(
+        => cache.SetStringSafeAsync(
             StampKey,
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture),
             CacheOptions,
@@ -127,7 +127,7 @@ public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache ca
     {
         db.Products.Update(product);
         await db.SaveChangesAsync(ct);
-        await cache.RemoveAsync(GetByIdKey(product.Id), ct);
+        await cache.RemoveSafeAsync(GetByIdKey(product.Id), ct);
         await BumpStampAsync(ct);
     }
 
@@ -138,7 +138,7 @@ public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache ca
 
         db.Products.Remove(entity);
         await db.SaveChangesAsync(ct);
-        await cache.RemoveAsync(GetByIdKey(id), ct);
+        await cache.RemoveSafeAsync(GetByIdKey(id), ct);
         await BumpStampAsync(ct);
     }
 
