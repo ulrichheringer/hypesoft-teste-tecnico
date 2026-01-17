@@ -1,8 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { FocusEvent } from "react";
 import { useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category } from "@/types/category";
+import { useI18n } from "@/components/i18n/i18n-provider";
 
 const productSchema = z.object({
   name: z.string().min(2, "Informe um nome valido."),
@@ -38,6 +41,7 @@ export function ProductForm({
   onSubmit,
   submitLabel,
 }: ProductFormProps) {
+  const { locale } = useI18n();
   const initialValues = useMemo(
     () => ({
       name: defaultValues?.name ?? "",
@@ -72,6 +76,12 @@ export function ProductForm({
     reset(initialValues);
   }, [initialValues, reset]);
 
+  const handleSelectAll = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
+  };
+
+  const normalizeStock = (value: string) => value.replace(/[^\d]/g, "");
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-2">
@@ -96,26 +106,43 @@ export function ProductForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="price">Preco</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0,00"
-            {...register("price")}
+          <Controller
+            control={control}
+            name="price"
+            render={({ field }) => (
+              <CurrencyInput
+                id="price"
+                value={field.value}
+                onValueChange={field.onChange}
+                onBlur={field.onBlur}
+                locale={locale}
+                placeholder="0,00"
+              />
+            )}
           />
           {errors.price && <p className="text-xs text-destructive">{errors.price.message}</p>}
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor="stock">Estoque</Label>
-          <Input
-            id="stock"
-            type="number"
-            step="1"
-            min="0"
-            placeholder="0"
-            {...register("stock")}
+          <Controller
+            control={control}
+            name="stock"
+            render={({ field }) => (
+              <Input
+                id="stock"
+                inputMode="numeric"
+                placeholder="0"
+                className="text-right tabular-nums"
+                value={field.value ?? 0}
+                onFocus={handleSelectAll}
+                onChange={(event) => {
+                  const next = normalizeStock(event.target.value);
+                  field.onChange(next === "" ? 0 : Number(next));
+                }}
+                onBlur={field.onBlur}
+              />
+            )}
           />
           {errors.stock && <p className="text-xs text-destructive">{errors.stock.message}</p>}
         </div>

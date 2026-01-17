@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { FocusEvent } from "react";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ type StockDialogProps = {
 
 export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: StockDialogProps) {
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -37,6 +38,12 @@ export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: Stoc
     reset({ stock: defaultStock });
   }, [defaultStock, reset]);
 
+  const handleSelectAll = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
+  };
+
+  const normalizeStock = (value: string) => value.replace(/[^\d]/g, "");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -46,7 +53,24 @@ export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: Stoc
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-2">
             <Label htmlFor="stock">Nova quantidade</Label>
-            <Input id="stock" type="number" min="0" step="1" {...register("stock")} />
+            <Controller
+              control={control}
+              name="stock"
+              render={({ field }) => (
+                <Input
+                  id="stock"
+                  inputMode="numeric"
+                  className="text-right tabular-nums"
+                  value={field.value ?? 0}
+                  onFocus={handleSelectAll}
+                  onChange={(event) => {
+                    const next = normalizeStock(event.target.value);
+                    field.onChange(next === "" ? 0 : Number(next));
+                  }}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
             {errors.stock && <p className="text-xs text-destructive">{errors.stock.message}</p>}
           </div>
           <Button type="submit" className="w-full rounded-2xl" disabled={isSubmitting}>
