@@ -1,65 +1,138 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import dynamic from "next/dynamic";
+import { useMemo } from "react";
+import { Boxes, CircleDollarSign, PackageCheck } from "lucide-react";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { TopProductsCard } from "@/components/dashboard/top-products-card";
+import { LowStockCard } from "@/components/dashboard/low-stock-card";
+import { RecentProductsTable } from "@/components/dashboard/recent-products-table";
+import { CategoryChartCard } from "@/components/dashboard/category-chart-card";
+import { InsightsCard } from "@/components/dashboard/insights-card";
+import { Button } from "@/components/ui/button";
+import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
+import { cn } from "@/lib/utils";
+
+const SalesLineChart = dynamic(
+  () => import("@/components/charts/sales-line-chart").then((mod) => mod.SalesLineChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-[220px] w-full animate-pulse rounded-2xl bg-muted" />,
+  },
+);
+
+const CategoryBarChart = dynamic(
+  () => import("@/components/charts/category-bar-chart").then((mod) => mod.CategoryBarChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-[220px] w-full animate-pulse rounded-2xl bg-muted" />,
+  },
+);
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+
+export default function DashboardPage() {
+  const summaryQuery = useDashboardSummary();
+  const summary = summaryQuery.data;
+
+  const categoryMap = useMemo(() => {
+    const categories = summary?.categories ?? [];
+    return categories.reduce<Record<string, string>>((acc, category) => {
+      acc[category.id] = category.name;
+      return acc;
+    }, {});
+  }, [summary?.categories]);
+
+  const totalProducts = summary?.totalProducts ?? 0;
+  const stockValue = summary?.stockValue ?? 0;
+  const lowStockCount = summary?.lowStockCount ?? summary?.lowStockItems.length ?? 0;
+  const lowStock = summary?.lowStockItems ?? [];
+  const topProducts = summary?.topProducts ?? [];
+  const recentProducts = summary?.recentProducts ?? [];
+  const categoryChart = summary?.categoryChart ?? [];
+  const insightData = summary?.trend ?? [];
+
+  const isLoading = summaryQuery.isLoading;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="font-display text-2xl font-semibold text-foreground">Dashboard</p>
+          <p className="text-sm text-muted-foreground">
+            Acompanhe indicadores e mantenha o estoque sob controle.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" className="rounded-2xl">
+            Maio 6 - Junho 6
+          </Button>
+          <Button className="rounded-2xl">Filtrar</Button>
         </div>
-      </main>
-    </div>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <StatCard
+            title="Total de produtos"
+            value={isLoading ? "--" : totalProducts.toString()}
+            delta="+12%"
+            icon={Boxes}
+            tone="primary"
+          />
+        </div>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
+          <StatCard
+            title="Valor do estoque"
+            value={isLoading ? "--" : formatCurrency(stockValue)}
+            delta="+6%"
+            icon={CircleDollarSign}
+            tone="success"
+          />
+        </div>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+          <StatCard
+            title="Itens com estoque baixo"
+            value={isLoading ? "--" : lowStockCount.toString()}
+            delta="-3%"
+            icon={PackageCheck}
+            tone="warning"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+          <InsightsCard>
+            <SalesLineChart data={insightData} />
+          </InsightsCard>
+        </div>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+          <TopProductsCard products={topProducts} categoryMap={categoryMap} />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+          <RecentProductsTable products={recentProducts} categoryMap={categoryMap} />
+        </div>
+        <div className="grid gap-4">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+            <LowStockCard products={lowStock} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            <CategoryChartCard>
+              <div className={cn(isLoading && "opacity-60")}>
+                <CategoryBarChart data={categoryChart} />
+              </div>
+            </CategoryChartCard>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
