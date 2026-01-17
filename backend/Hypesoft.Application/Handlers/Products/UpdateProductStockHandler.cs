@@ -22,6 +22,7 @@ public sealed class UpdateProductStockHandler(IProductRepository products)
             product.Description,
             product.Price,
             product.Stock,
-            product.CategoryId);
+            product.CategoryId,
+            product.CreatedAt);
     }
 }

@@ -8,6 +8,7 @@ public class Product
     public decimal Price { get; private set; }
     public int Stock { get; private set; }
     public Guid CategoryId { get; private set; }
+    public DateTime CreatedAt { get; private set; } = DateTime.UnixEpoch;
 
     protected Product() { }
 
@@ -24,6 +25,7 @@ public class Product
         Price = price;
         Stock = stock;
         CategoryId = categoryId;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public void Update(

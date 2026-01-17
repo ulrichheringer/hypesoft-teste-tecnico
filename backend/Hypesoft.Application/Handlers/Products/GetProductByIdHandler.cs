@@ -13,6 +13,13 @@ public sealed class GetProductByIdHandler(IProductRepository products)
         var product = await products.GetByIdAsync(request.Id, ct);
         return product is null
             ? null
-            : new ProductDto(product.Id, product.Name, product.Description, product.Price, product.Stock, product.CategoryId);
+            : new ProductDto(
+                product.Id,
+                product.Name,
+                product.Description,
+                product.Price,
+                product.Stock,
+                product.CategoryId,
+                product.CreatedAt);
     }
 }

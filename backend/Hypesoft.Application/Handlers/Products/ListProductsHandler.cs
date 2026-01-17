@@ -17,7 +17,14 @@ public sealed class ListProductsHandler(IProductRepository products)
         var (items, total) = await products.ListAsync(page, pageSize, search, request.CategoryId, ct);
 
         var dtos = items
-            .Select(x => new ProductDto(x.Id, x.Name, x.Description, x.Price, x.Stock, x.CategoryId))
+            .Select(x => new ProductDto(
+                x.Id,
+                x.Name,
+                x.Description,
+                x.Price,
+                x.Stock,
+                x.CategoryId,
+                x.CreatedAt))
             .ToList();
 
         return new PagedProductsResponse(dtos, total, page, pageSize);
