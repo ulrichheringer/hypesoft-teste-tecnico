@@ -3,6 +3,7 @@ using Hypesoft.Application.Handlers.Products;
 using Hypesoft.Application.Queries.Products;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Domain.Repositories;
+using Hypesoft.Tests.Support;
 
 namespace Hypesoft.Tests.Application.Handlers;
 
@@ -12,7 +13,8 @@ public class ListProductsHandlerTests
     public async Task Handle_ShouldNormalizePagingAndSearch()
     {
         var repository = new ProductListCaptureRepository();
-        var handler = new ListProductsHandler(repository);
+        var mapper = TestMapper.Create();
+        var handler = new ListProductsHandler(repository, mapper);
         var categoryId = Guid.NewGuid();
         var query = new ListProductsQuery(0, -5, "  notebook  ", categoryId);
 

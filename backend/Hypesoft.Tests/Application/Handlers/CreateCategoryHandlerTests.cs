@@ -4,6 +4,7 @@ using Hypesoft.Application.DTOs;
 using Hypesoft.Application.Handlers.Categories;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Domain.Repositories;
+using Hypesoft.Tests.Support;
 
 namespace Hypesoft.Tests.Application.Handlers;
 
@@ -13,7 +14,8 @@ public class CreateCategoryHandlerTests
     public async Task Handle_ShouldThrow_WhenNameAlreadyExists()
     {
         var repository = new CategoryRepositoryStub { Exists = true };
-        var handler = new CreateCategoryHandler(repository);
+        var mapper = TestMapper.Create();
+        var handler = new CreateCategoryHandler(repository, mapper);
         var command = new CreateCategoryCommand(new CreateCategoryRequest("Electronics"));
 
         Func<Task> act = () => handler.Handle(command, CancellationToken.None);
@@ -26,7 +28,8 @@ public class CreateCategoryHandlerTests
     public async Task Handle_ShouldCreateCategory_WhenNameIsUnique()
     {
         var repository = new CategoryRepositoryStub { Exists = false };
-        var handler = new CreateCategoryHandler(repository);
+        var mapper = TestMapper.Create();
+        var handler = new CreateCategoryHandler(repository, mapper);
         var command = new CreateCategoryCommand(new CreateCategoryRequest("Electronics"));
 
         var result = await handler.Handle(command, CancellationToken.None);

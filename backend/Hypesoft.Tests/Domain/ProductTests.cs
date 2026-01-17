@@ -46,4 +46,43 @@ public class ProductTests
 
         product.IsLowStock().Should().BeFalse();
     }
+
+    [Fact]
+    public void Constructor_ShouldThrow_WhenNameIsEmpty()
+    {
+        Action act = () => new Product("", "Desc", 10m, 5, Guid.NewGuid());
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void UpdateStock_ShouldThrow_WhenNegative()
+    {
+        var product = new Product("Name", "Desc", 10m, 5, Guid.NewGuid());
+
+        Action act = () => product.UpdateStock(-1);
+
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void Rehydrate_ShouldRestoreValues()
+    {
+        var id = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var createdAt = DateTime.UtcNow.AddDays(-1);
+
+        var product = Product.Rehydrate(
+            id,
+            "Restored",
+            "Desc",
+            12m,
+            3,
+            categoryId,
+            createdAt);
+
+        product.Id.Should().Be(id);
+        product.CreatedAt.Should().Be(createdAt);
+        product.CategoryId.Should().Be(categoryId);
+    }
 }

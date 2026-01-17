@@ -4,6 +4,7 @@ using Hypesoft.Application.DTOs;
 using Hypesoft.Application.Handlers.Products;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Domain.Repositories;
+using Hypesoft.Tests.Support;
 
 namespace Hypesoft.Tests.Application.Handlers;
 
@@ -14,7 +15,8 @@ public class CreateProductHandlerTests
     {
         var products = new ProductRepositoryStub();
         var categories = new CategoryRepositoryStub { Category = null };
-        var handler = new CreateProductHandler(products, categories);
+        var mapper = TestMapper.Create();
+        var handler = new CreateProductHandler(products, categories, mapper);
         var command = new CreateProductCommand(new CreateProductRequest(
             "Notebook",
             "Gaming",
@@ -34,7 +36,8 @@ public class CreateProductHandlerTests
         var category = new Category("Electronics");
         var products = new ProductRepositoryStub();
         var categories = new CategoryRepositoryStub { Category = category };
-        var handler = new CreateProductHandler(products, categories);
+        var mapper = TestMapper.Create();
+        var handler = new CreateProductHandler(products, categories, mapper);
         var command = new CreateProductCommand(new CreateProductRequest(
             "Notebook",
             "Gaming",
