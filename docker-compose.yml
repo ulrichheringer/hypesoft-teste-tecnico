@@ -35,6 +35,32 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: hypesoft-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: hypesoft-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+
 volumes:
   mongo_data:
   keycloak_data:
+  prometheus_data:
+  grafana_data:

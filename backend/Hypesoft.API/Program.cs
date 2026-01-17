@@ -12,6 +12,10 @@ using Scalar;
 using Hypesoft.API.Auth;
 using Hypesoft.API.OpenApi;
 using Hypesoft.API.Middlewares;
+using Hypesoft.Application.Interfaces;
+using Hypesoft.API.Observability;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +43,29 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+    ?? Array.Empty<string>();
+var allowAnyOrigin = builder.Configuration.GetValue("Cors:AllowAnyOrigin", builder.Environment.IsDevelopment())
+    || corsOrigins.Length == 0
+    || corsOrigins.Any(origin => string.Equals(origin, "*", StringComparison.Ordinal));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        if (allowAnyOrigin)
+        {
+            policy.AllowAnyOrigin();
+        }
+        else
+        {
+            policy.WithOrigins(corsOrigins);
+        }
+
+        policy.AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
@@ -59,6 +86,19 @@ builder.Services.AddDbContext<HypesoftDbContext>(options =>
 
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddSingleton<RumMetrics>();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("Hypesoft.API"))
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddMeter(RumMetrics.MeterName)
+            .AddPrometheusExporter();
+    });
 
 builder.Services.AddMediatR(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly);
 
@@ -98,11 +138,16 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+app.UseCors("Frontend");
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health");
-app.MapControllers();
+app.MapPrometheusScrapingEndpoint();
+app.MapControllers().RequireCors("Frontend");
 
 app.Run();
