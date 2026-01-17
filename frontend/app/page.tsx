@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Boxes, CircleDollarSign, PackageCheck } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { TopProductsCard } from "@/components/dashboard/top-products-card";
@@ -11,7 +11,11 @@ import { CategoryChartCard } from "@/components/dashboard/category-chart-card";
 import { InsightsCard } from "@/components/dashboard/insights-card";
 import { Button } from "@/components/ui/button";
 import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
+import { useI18n } from "@/components/i18n/i18n-provider";
+import { useAuth } from "@/components/auth/auth-provider";
+import { exportInventoryReport } from "@/services/reports";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const SalesLineChart = dynamic(
   () => import("@/components/charts/sales-line-chart").then((mod) => mod.SalesLineChart),
@@ -29,8 +33,8 @@ const CategoryBarChart = dynamic(
   },
 );
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
+const formatCurrency = (value: number, locale: string) =>
+  new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "BRL",
   }).format(value);
@@ -38,6 +42,9 @@ const formatCurrency = (value: number) =>
 export default function DashboardPage() {
   const summaryQuery = useDashboardSummary();
   const summary = summaryQuery.data;
+  const { locale, t } = useI18n();
+  const { token } = useAuth();
+  const [exporting, setExporting] = useState(false);
 
   const categoryMap = useMemo(() => {
     const categories = summary?.categories ?? [];
@@ -57,21 +64,49 @@ export default function DashboardPage() {
   const insightData = summary?.trend ?? [];
 
   const isLoading = summaryQuery.isLoading;
+  const stockValueLabel = isLoading ? "--" : formatCurrency(stockValue, locale);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const { blob, fileName } = await exportInventoryReport(token);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download =
+        fileName ?? `relatorio-estoque-${new Date().toISOString().slice(0, 10)}.pdf`;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Relatorio exportado.");
+    } catch {
+      toast.error("Nao foi possivel exportar o relatorio.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <section className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="font-display text-2xl font-semibold text-foreground">Dashboard</p>
-          <p className="text-sm text-muted-foreground">
-            Acompanhe indicadores e mantenha o estoque sob controle.
+          <p className="font-display text-2xl font-semibold text-foreground">
+            {t("dashboard.title")}
           </p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" className="rounded-2xl">
-            Maio 6 - Junho 6
+          <Button variant="secondary" className="rounded-xl">
+            {t("dashboard.dateRange")}
           </Button>
-          <Button className="rounded-2xl">Filtrar</Button>
+          <Button className="rounded-xl">{t("dashboard.filter")}</Button>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {t("dashboard.exportPdf")}
+          </Button>
         </div>
       </header>
 
@@ -88,7 +123,7 @@ export default function DashboardPage() {
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
           <StatCard
             title="Valor do estoque"
-            value={isLoading ? "--" : formatCurrency(stockValue)}
+            value={stockValueLabel}
             delta="+6%"
             icon={CircleDollarSign}
             tone="success"

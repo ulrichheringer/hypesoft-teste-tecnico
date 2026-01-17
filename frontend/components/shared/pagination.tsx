@@ -21,7 +21,7 @@ export function Pagination({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/95 px-4 py-3 text-sm shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-white/95 px-4 py-3 text-sm shadow-sm">
       <div className="flex items-center gap-2 text-muted-foreground">
         <span>Pagina</span>
         <span className="font-semibold text-foreground">

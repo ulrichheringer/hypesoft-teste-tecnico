@@ -24,7 +24,7 @@ type CategoriesTableProps = {
 
 export function CategoriesTable({ categories, onEdit, onDelete, canEdit }: CategoriesTableProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-white/95 shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-border bg-white/95 shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>

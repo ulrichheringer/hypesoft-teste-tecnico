@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -18,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { useCategories } from "@/hooks/use-categories";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useProducts } from "@/hooks/use-products";
 import {
   createProduct,
@@ -31,20 +32,27 @@ import type { Product } from "@/types/product";
 
 export default function ProductsPage() {
   const { token, hasRole } = useAuth();
+  const { t } = useI18n();
   const canEdit = hasRole("admin");
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const searchParam = searchParams.get("search") ?? "";
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParam);
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const debouncedSearch = useDebouncedValue(search, 400);
 
+  useEffect(() => {
+    setSearch(searchParam);
+    setPage(1);
+    setCategoryId(null);
+  }, [searchParam]);
   const categoriesQuery = useCategories({ page: 1, pageSize: 200 });
   const productsQuery = useProducts({
     page,
     pageSize,
-    search: debouncedSearch,
+    search,
     categoryId,
   });
 
@@ -127,25 +135,25 @@ export default function ProductsPage() {
     <section className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="font-display text-2xl font-semibold text-foreground">Produtos</p>
-          <p className="text-sm text-muted-foreground">
-            Controle produtos, estoque e categorizacao.
+          <p className="font-display text-2xl font-semibold text-foreground">
+            {t("products.title")}
           </p>
+          <p className="text-sm text-muted-foreground">{t("products.subtitle")}</p>
         </div>
         {canEdit ? (
-          <Button className="rounded-2xl" onClick={() => setCreateOpen(true)}>
+          <Button className="rounded-xl" onClick={() => setCreateOpen(true)}>
             <Plus size={16} className="mr-2" />
-            Novo produto
+            {t("products.new")}
           </Button>
         ) : null}
       </header>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex w-full items-center gap-3 rounded-2xl border border-border bg-white px-4 py-2 shadow-sm lg:max-w-md">
+        <div className="flex w-full items-center gap-3 rounded-xl border border-border bg-white px-4 py-2 shadow-sm lg:max-w-md">
           <Search size={18} className="text-muted-foreground" />
           <Input
             className="border-0 bg-transparent px-0 text-sm focus-visible:ring-0"
-            placeholder="Buscar por nome"
+            placeholder={t("products.searchPlaceholder")}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -160,8 +168,8 @@ export default function ProductsPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full rounded-2xl bg-white shadow-sm lg:w-60">
-            <SelectValue placeholder="Categoria" />
+          <SelectTrigger className="w-full rounded-xl bg-white shadow-sm lg:w-60">
+            <SelectValue placeholder={t("products.categoryPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
