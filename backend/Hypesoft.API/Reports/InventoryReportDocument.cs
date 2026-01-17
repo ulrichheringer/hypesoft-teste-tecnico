@@ -99,7 +99,11 @@ public sealed class InventoryReportDocument(DashboardSummaryDto summary) : IDocu
         => _categoryMap.TryGetValue(categoryId, out var name) ? name : "Sem categoria";
 
     private static IContainer HeaderCell(IContainer container)
-        => container.PaddingVertical(4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).TextStyle(x => x.SemiBold());
+        => container
+            .PaddingVertical(4)
+            .BorderBottom(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .DefaultTextStyle(text => text.SemiBold());
 
     private static IContainer BodyCell(IContainer container)
         => container.PaddingVertical(3);
