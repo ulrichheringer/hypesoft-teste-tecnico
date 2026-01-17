@@ -10,11 +10,30 @@ public class Category
     public Category(string name)
     {
         Id = Guid.NewGuid();
-        Name = name;
+        Name = NormalizeRequired(name, nameof(name));
     }
+
+    private Category(Guid id, string name)
+    {
+        Id = id;
+        Name = NormalizeRequired(name, nameof(name));
+    }
+
+    public static Category Rehydrate(Guid id, string name)
+        => new(id, name);
 
     public void Rename(string name)
     {
-        Name = name;
+        Name = NormalizeRequired(name, nameof(name));
+    }
+
+    private static string NormalizeRequired(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException($"{fieldName} is required.", fieldName);
+        }
+
+        return value.Trim();
     }
 }

@@ -1,43 +1,68 @@
+using System.Globalization;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Domain.Repositories;
+using Hypesoft.Infrastructure.Caching;
 using Hypesoft.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Hypesoft.Infrastructure.Repositories;
 
-public sealed class CategoryRepository(HypesoftDbContext db, IMemoryCache cache) : ICategoryRepository
+public sealed class CategoryRepository(HypesoftDbContext db, IDistributedCache cache) : ICategoryRepository
 {
     private const string StampKey = "categories:stamp";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
+    private static readonly DistributedCacheEntryOptions CacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = CacheDuration
+    };
 
     private static string GetByIdKey(Guid id) => $"categories:by-id:{id}";
 
     private static string GetListKey(int page, int pageSize, string? search, long stamp)
         => $"categories:list:{page}:{pageSize}:{search}:{stamp}";
 
-    private long GetStamp()
+    private async Task<long> GetStampAsync(CancellationToken ct)
     {
-        if (!cache.TryGetValue(StampKey, out long stamp))
+        var stampValue = await cache.GetStringAsync(StampKey, ct);
+        if (long.TryParse(stampValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var stamp))
         {
-            stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            cache.Set(StampKey, stamp);
+            return stamp;
         }
 
+        stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        await cache.SetStringAsync(
+            StampKey,
+            stamp.ToString(CultureInfo.InvariantCulture),
+            CacheOptions,
+            ct);
         return stamp;
     }
 
-    private void BumpStamp()
-    {
-        cache.Set(StampKey, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-    }
+    private Task BumpStampAsync(CancellationToken ct)
+        => cache.SetStringAsync(
+            StampKey,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture),
+            CacheOptions,
+            ct);
 
-    public Task<Category?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => cache.GetOrCreateAsync(GetByIdKey(id), entry =>
+    public async Task<Category?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var cacheKey = GetByIdKey(id);
+        var cached = await cache.GetRecordAsync<CategoryCacheItem>(cacheKey, ct);
+        if (cached is not null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return db.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        })!;
+            return cached.ToEntity();
+        }
+
+        var category = await db.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (category is not null)
+        {
+            await cache.SetRecordAsync(cacheKey, CategoryCacheItem.From(category), CacheOptions, ct);
+        }
+
+        return category;
+    }
 
     public async Task<(IReadOnlyList<Category> Items, long Total)> ListAsync(
         int page,
@@ -49,45 +74,52 @@ public sealed class CategoryRepository(HypesoftDbContext db, IMemoryCache cache)
             ? null
             : search.Trim().ToLowerInvariant();
 
-        var stamp = GetStamp();
+        var stamp = await GetStampAsync(ct);
         var cacheKey = GetListKey(page, pageSize, normalized, stamp);
-
-        return await cache.GetOrCreateAsync(cacheKey, async entry =>
+        var cached = await cache.GetRecordAsync<CacheList<CategoryCacheItem>>(cacheKey, ct);
+        if (cached is not null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+            var cachedItems = cached.Items.Select(item => item.ToEntity()).ToList();
+            return (cachedItems, cached.Total);
+        }
 
-            var query = db.Categories.AsNoTracking().AsQueryable();
+        var query = db.Categories.AsNoTracking().AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                query = query.Where(x => x.Name.ToLower().Contains(normalized));
-            }
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            query = query.Where(x => x.Name.ToLower().Contains(normalized));
+        }
 
-            var total = await query.LongCountAsync(ct);
+        var total = await query.LongCountAsync(ct);
 
-            var items = await query
-                .OrderBy(x => x.Name)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct);
+        var items = await query
+            .OrderBy(x => x.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
 
-            return ((IReadOnlyList<Category>)items, total);
-        });
+        var cachePayload = new CacheList<CategoryCacheItem>(
+            items.Select(CategoryCacheItem.From).ToList(),
+            total);
+
+        await cache.SetRecordAsync(cacheKey, cachePayload, CacheOptions, ct);
+
+        return ((IReadOnlyList<Category>)items, total);
     }
 
     public async Task AddAsync(Category category, CancellationToken ct = default)
     {
         db.Categories.Add(category);
         await db.SaveChangesAsync(ct);
-        BumpStamp();
+        await BumpStampAsync(ct);
     }
 
     public async Task UpdateAsync(Category category, CancellationToken ct = default)
     {
         db.Categories.Update(category);
         await db.SaveChangesAsync(ct);
-        cache.Remove(GetByIdKey(category.Id));
-        BumpStamp();
+        await cache.RemoveAsync(GetByIdKey(category.Id), ct);
+        await BumpStampAsync(ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -97,13 +129,24 @@ public sealed class CategoryRepository(HypesoftDbContext db, IMemoryCache cache)
 
         db.Categories.Remove(entity);
         await db.SaveChangesAsync(ct);
-        cache.Remove(GetByIdKey(id));
-        BumpStamp();
+        await cache.RemoveAsync(GetByIdKey(id), ct);
+        await BumpStampAsync(ct);
     }
 
     public Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default)
     {
         var normalized = name.Trim().ToLowerInvariant();
         return db.Categories.AsNoTracking().AnyAsync(x => x.Name.ToLower() == normalized, ct);
+    }
+
+    private sealed record CacheList<T>(List<T> Items, long Total);
+
+    private sealed record CategoryCacheItem(Guid Id, string Name)
+    {
+        public static CategoryCacheItem From(Category category)
+            => new(category.Id, category.Name);
+
+        public Category ToEntity()
+            => Category.Rehydrate(Id, Name);
     }
 }

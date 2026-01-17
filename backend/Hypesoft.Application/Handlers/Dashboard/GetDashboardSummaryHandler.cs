@@ -2,10 +2,11 @@ using Hypesoft.Application.DTOs;
 using Hypesoft.Application.Interfaces;
 using Hypesoft.Application.Queries.Dashboard;
 using MediatR;
+using AutoMapper;
 
 namespace Hypesoft.Application.Handlers.Dashboard;
 
-public sealed class GetDashboardSummaryHandler(IDashboardRepository dashboard)
+public sealed class GetDashboardSummaryHandler(IDashboardRepository dashboard, IMapper mapper)
     : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
 {
     private const int LowStockThreshold = 10;
@@ -43,24 +44,14 @@ public sealed class GetDashboardSummaryHandler(IDashboardRepository dashboard)
             summary.TotalProducts,
             summary.StockValue,
             summary.LowStockCount,
-            summary.LowStockItems.Select(MapProduct).ToList(),
-            summary.TopProducts.Select(MapProduct).ToList(),
-            summary.RecentProducts.Select(MapProduct).ToList(),
-            summary.Categories.Select(category => new CategoryDto(category.Id, category.Name)).ToList(),
+            summary.LowStockItems.Select(mapper.Map<ProductDto>).ToList(),
+            summary.TopProducts.Select(mapper.Map<ProductDto>).ToList(),
+            summary.RecentProducts.Select(mapper.Map<ProductDto>).ToList(),
+            summary.Categories.Select(mapper.Map<CategoryDto>).ToList(),
             summary.CategoryCounts
                 .OrderByDescending(item => item.Count)
                 .Select(item => new CategoryChartItemDto(item.CategoryName, item.Count))
                 .ToList(),
             trend);
     }
-
-    private static ProductDto MapProduct(Domain.Entities.Product product)
-        => new(
-            product.Id,
-            product.Name,
-            product.Description,
-            product.Price,
-            product.Stock,
-            product.CategoryId,
-            product.CreatedAt);
 }

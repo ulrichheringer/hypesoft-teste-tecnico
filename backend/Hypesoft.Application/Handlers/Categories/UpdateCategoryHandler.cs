@@ -2,10 +2,11 @@ using Hypesoft.Application.Commands.Categories;
 using Hypesoft.Application.DTOs;
 using Hypesoft.Domain.Repositories;
 using MediatR;
+using AutoMapper;
 
 namespace Hypesoft.Application.Handlers.Categories;
 
-public sealed class UpdateCategoryHandler(ICategoryRepository categories)
+public sealed class UpdateCategoryHandler(ICategoryRepository categories, IMapper mapper)
     : IRequestHandler<UpdateCategoryCommand, CategoryDto?>
 {
     public async Task<CategoryDto?> Handle(UpdateCategoryCommand request, CancellationToken ct)
@@ -25,6 +26,6 @@ public sealed class UpdateCategoryHandler(ICategoryRepository categories)
         category.Rename(name);
         await categories.UpdateAsync(category, ct);
 
-        return new CategoryDto(category.Id, category.Name);
+        return mapper.Map<CategoryDto>(category);
     }
 }

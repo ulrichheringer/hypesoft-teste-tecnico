@@ -13,6 +13,7 @@ using Hypesoft.API.Auth;
 using Hypesoft.API.OpenApi;
 using Hypesoft.API.Middlewares;
 using Hypesoft.Application.Interfaces;
+using Hypesoft.Application.Mapping;
 using Hypesoft.API.Observability;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -22,8 +23,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Host.UseSerilog((context, _, configuration) =>
 {
@@ -89,6 +93,12 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddSingleton<RumMetrics>();
 
+var redisConnection = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+});
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService("Hypesoft.API"))
     .WithMetrics(metrics =>
@@ -101,6 +111,7 @@ builder.Services.AddOpenTelemetry()
     });
 
 builder.Services.AddMediatR(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(Hypesoft.Application.Validators.Categories.CreateCategoryRequestValidator).Assembly);

@@ -59,8 +59,18 @@ services:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana
 
+  redis:
+    image: redis:7-alpine
+    container_name: hypesoft-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   mongo_data:
   keycloak_data:
   prometheus_data:
   grafana_data:
+  redis_data:

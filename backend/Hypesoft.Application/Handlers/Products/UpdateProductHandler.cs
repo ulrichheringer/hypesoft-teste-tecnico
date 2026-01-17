@@ -2,10 +2,14 @@ using Hypesoft.Application.Commands.Products;
 using Hypesoft.Application.DTOs;
 using Hypesoft.Domain.Repositories;
 using MediatR;
+using AutoMapper;
 
 namespace Hypesoft.Application.Handlers.Products;
 
-public sealed class UpdateProductHandler(IProductRepository products, ICategoryRepository categories)
+public sealed class UpdateProductHandler(
+    IProductRepository products,
+    ICategoryRepository categories,
+    IMapper mapper)
     : IRequestHandler<UpdateProductCommand, ProductDto?>
 {
     public async Task<ProductDto?> Handle(UpdateProductCommand request, CancellationToken ct)
@@ -29,13 +33,6 @@ public sealed class UpdateProductHandler(IProductRepository products, ICategoryR
 
         await products.UpdateAsync(product, ct);
 
-        return new ProductDto(
-            product.Id,
-            product.Name,
-            product.Description,
-            product.Price,
-            product.Stock,
-            product.CategoryId,
-            product.CreatedAt);
+        return mapper.Map<ProductDto>(product);
     }
 }

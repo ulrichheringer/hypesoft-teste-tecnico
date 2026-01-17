@@ -1,15 +1,21 @@
+using System.Globalization;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Domain.Repositories;
+using Hypesoft.Infrastructure.Caching;
 using Hypesoft.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Hypesoft.Infrastructure.Repositories;
 
-public sealed class ProductRepository(HypesoftDbContext db, IMemoryCache cache) : IProductRepository
+public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache cache) : IProductRepository
 {
     private const string StampKey = "products:stamp";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
+    private static readonly DistributedCacheEntryOptions CacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = CacheDuration
+    };
 
     private static string GetByIdKey(Guid id) => $"products:by-id:{id}";
 
@@ -19,28 +25,47 @@ public sealed class ProductRepository(HypesoftDbContext db, IMemoryCache cache) 
     private static string GetLowStockKey(int threshold, long stamp)
         => $"products:low-stock:{threshold}:{stamp}";
 
-    private long GetStamp()
+    private async Task<long> GetStampAsync(CancellationToken ct)
     {
-        if (!cache.TryGetValue(StampKey, out long stamp))
+        var stampValue = await cache.GetStringAsync(StampKey, ct);
+        if (long.TryParse(stampValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var stamp))
         {
-            stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            cache.Set(StampKey, stamp);
+            return stamp;
         }
 
+        stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        await cache.SetStringAsync(
+            StampKey,
+            stamp.ToString(CultureInfo.InvariantCulture),
+            CacheOptions,
+            ct);
         return stamp;
     }
 
-    private void BumpStamp()
-    {
-        cache.Set(StampKey, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-    }
+    private Task BumpStampAsync(CancellationToken ct)
+        => cache.SetStringAsync(
+            StampKey,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture),
+            CacheOptions,
+            ct);
 
-    public Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => cache.GetOrCreateAsync(GetByIdKey(id), entry =>
+    public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var cacheKey = GetByIdKey(id);
+        var cached = await cache.GetRecordAsync<ProductCacheItem>(cacheKey, ct);
+        if (cached is not null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        })!;
+            return cached.ToEntity();
+        }
+
+        var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (product is not null)
+        {
+            await cache.SetRecordAsync(cacheKey, ProductCacheItem.From(product), CacheOptions, ct);
+        }
+
+        return product;
+    }
 
     public async Task<(IReadOnlyList<Product> Items, long Total)> ListAsync(
         int page,
@@ -53,50 +78,57 @@ public sealed class ProductRepository(HypesoftDbContext db, IMemoryCache cache) 
             ? null
             : search.Trim().ToLowerInvariant();
 
-        var stamp = GetStamp();
+        var stamp = await GetStampAsync(ct);
         var cacheKey = GetListKey(page, pageSize, normalizedSearch, categoryId, stamp);
-
-        return await cache.GetOrCreateAsync(cacheKey, async entry =>
+        var cached = await cache.GetRecordAsync<CacheList<ProductCacheItem>>(cacheKey, ct);
+        if (cached is not null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+            var cachedItems = cached.Items.Select(item => item.ToEntity()).ToList();
+            return (cachedItems, cached.Total);
+        }
 
-            var query = db.Products.AsNoTracking().AsQueryable();
+        var query = db.Products.AsNoTracking().AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(normalizedSearch))
-            {
-                query = query.Where(x => x.Name.ToLower().Contains(normalizedSearch));
-            }
+        if (!string.IsNullOrWhiteSpace(normalizedSearch))
+        {
+            query = query.Where(x => x.Name.ToLower().Contains(normalizedSearch));
+        }
 
-            if (categoryId.HasValue)
-            {
-                query = query.Where(x => x.CategoryId == categoryId.Value);
-            }
+        if (categoryId.HasValue)
+        {
+            query = query.Where(x => x.CategoryId == categoryId.Value);
+        }
 
-            var total = await query.LongCountAsync(ct);
+        var total = await query.LongCountAsync(ct);
 
-            var items = await query
-                .OrderBy(x => x.Name)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct);
+        var items = await query
+            .OrderBy(x => x.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
 
-            return ((IReadOnlyList<Product>)items, total);
-        });
+        var cachePayload = new CacheList<ProductCacheItem>(
+            items.Select(ProductCacheItem.From).ToList(),
+            total);
+
+        await cache.SetRecordAsync(cacheKey, cachePayload, CacheOptions, ct);
+
+        return ((IReadOnlyList<Product>)items, total);
     }
 
     public async Task AddAsync(Product product, CancellationToken ct = default)
     {
         db.Products.Add(product);
         await db.SaveChangesAsync(ct);
-        BumpStamp();
+        await BumpStampAsync(ct);
     }
 
     public async Task UpdateAsync(Product product, CancellationToken ct = default)
     {
         db.Products.Update(product);
         await db.SaveChangesAsync(ct);
-        cache.Remove(GetByIdKey(product.Id));
-        BumpStamp();
+        await cache.RemoveAsync(GetByIdKey(product.Id), ct);
+        await BumpStampAsync(ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -106,23 +138,57 @@ public sealed class ProductRepository(HypesoftDbContext db, IMemoryCache cache) 
 
         db.Products.Remove(entity);
         await db.SaveChangesAsync(ct);
-        cache.Remove(GetByIdKey(id));
-        BumpStamp();
+        await cache.RemoveAsync(GetByIdKey(id), ct);
+        await BumpStampAsync(ct);
     }
 
     public async Task<IReadOnlyList<Product>> ListLowStockAsync(int threshold, CancellationToken ct = default)
     {
-        var stamp = GetStamp();
+        var stamp = await GetStampAsync(ct);
         var cacheKey = GetLowStockKey(threshold, stamp);
 
-        return await cache.GetOrCreateAsync(cacheKey, async entry =>
+        var cached = await cache.GetRecordAsync<List<ProductCacheItem>>(cacheKey, ct);
+        if (cached is not null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            var items = await db.Products.AsNoTracking()
-                .Where(x => x.Stock < threshold)
-                .OrderBy(x => x.Stock)
-                .ToListAsync(ct);
-            return (IReadOnlyList<Product>)items;
-        });
+            return cached.Select(item => item.ToEntity()).ToList();
+        }
+
+        var items = await db.Products.AsNoTracking()
+            .Where(x => x.Stock < threshold)
+            .OrderBy(x => x.Stock)
+            .ToListAsync(ct);
+
+        await cache.SetRecordAsync(
+            cacheKey,
+            items.Select(ProductCacheItem.From).ToList(),
+            CacheOptions,
+            ct);
+
+        return items;
+    }
+
+    private sealed record CacheList<T>(List<T> Items, long Total);
+
+    private sealed record ProductCacheItem(
+        Guid Id,
+        string Name,
+        string Description,
+        decimal Price,
+        int Stock,
+        Guid CategoryId,
+        DateTime CreatedAt)
+    {
+        public static ProductCacheItem From(Product product)
+            => new(
+                product.Id,
+                product.Name,
+                product.Description,
+                product.Price,
+                product.Stock,
+                product.CategoryId,
+                product.CreatedAt);
+
+        public Product ToEntity()
+            => Product.Rehydrate(Id, Name, Description, Price, Stock, CategoryId, CreatedAt);
     }
 }

@@ -2,10 +2,11 @@ using Hypesoft.Application.DTOs;
 using Hypesoft.Application.Queries.Categories;
 using Hypesoft.Domain.Repositories;
 using MediatR;
+using AutoMapper;
 
 namespace Hypesoft.Application.Handlers.Categories;
 
-public sealed class ListCategoriesHandler(ICategoryRepository categories)
+public sealed class ListCategoriesHandler(ICategoryRepository categories, IMapper mapper)
     : IRequestHandler<ListCategoriesQuery, PagedCategoriesResponse>
 {
     public async Task<PagedCategoriesResponse> Handle(ListCategoriesQuery request, CancellationToken ct)
@@ -16,7 +17,7 @@ public sealed class ListCategoriesHandler(ICategoryRepository categories)
 
         var (items, total) = await categories.ListAsync(page, pageSize, search, ct);
 
-        var dtos = items.Select(x => new CategoryDto(x.Id, x.Name)).ToList();
+        var dtos = items.Select(mapper.Map<CategoryDto>).ToList();
 
         return new PagedCategoriesResponse(dtos, total, page, pageSize);
     }
