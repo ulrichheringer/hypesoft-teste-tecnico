@@ -20,10 +20,13 @@ public sealed class DashboardRepository(HypesoftDbContext db) : IDashboardReposi
         var categories = db.Categories.AsNoTracking();
 
         var totalProducts = await products.LongCountAsync(ct);
-        var stockValue = await products
-            .Select(product => product.Price * product.Stock)
-            .DefaultIfEmpty(0m)
-            .SumAsync(ct);
+        var stockValue = 0m;
+        if (totalProducts > 0)
+        {
+            stockValue = await products
+                .Select(product => product.Price * product.Stock)
+                .SumAsync(ct);
+        }
 
         var lowStockCount = await products.CountAsync(product => product.Stock < lowStockThreshold, ct);
         var lowStockItems = await products
