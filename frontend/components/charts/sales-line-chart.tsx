@@ -9,12 +9,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useI18n } from "@/components/i18n/i18n-provider";
 
 type SalesLineChartProps = {
   data: Array<{ label: string; value: number; benchmark: number }>;
 };
 
 export function SalesLineChart({ data }: SalesLineChartProps) {
+  const { t } = useI18n();
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ left: 8, right: 8 }}>
@@ -31,6 +34,7 @@ export function SalesLineChart({ data }: SalesLineChartProps) {
         <Line
           type="monotone"
           dataKey="value"
+          name={t("dashboard.valueLabel")}
           stroke="#6366F1"
           strokeWidth={2}
           dot={false}
@@ -38,6 +42,7 @@ export function SalesLineChart({ data }: SalesLineChartProps) {
         <Line
           type="monotone"
           dataKey="benchmark"
+          name={t("dashboard.averageLabel")}
           stroke="#EC4899"
           strokeWidth={2}
           dot={false}

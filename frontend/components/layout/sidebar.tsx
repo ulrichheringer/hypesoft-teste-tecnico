@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { cn } from "@/lib/utils";
 import { brand, navSections } from "@/components/layout/nav-data";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const BrandIcon = brand.icon;
 
   return (
@@ -19,15 +21,15 @@ export function Sidebar() {
           <p className="font-display text-lg font-semibold text-sidebar-foreground">
             {brand.name}
           </p>
-          <p className="text-xs text-muted-foreground">{brand.tagline}</p>
+          <p className="text-xs text-muted-foreground">{t(brand.taglineKey)}</p>
         </div>
       </div>
 
       <nav className="flex flex-1 flex-col gap-6">
         {navSections.map((section) => (
-          <div key={section.label} className="space-y-3">
+          <div key={section.labelKey} className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
-              {section.label}
+              {t(section.labelKey)}
             </p>
             <div className="flex flex-col gap-1">
               {section.items.map((item) => {
@@ -36,7 +38,7 @@ export function Sidebar() {
 
                 return (
                   <Link
-                    key={item.label}
+                    key={item.labelKey}
                     href={item.disabled ? "#" : item.href}
                     aria-disabled={item.disabled}
                     className={cn(
@@ -58,7 +60,7 @@ export function Sidebar() {
                     >
                       <Icon size={16} />
                     </span>
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 );
               })}

@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { Boxes, CircleDollarSign, PackageCheck } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { TopProductsCard } from "@/components/dashboard/top-products-card";
 import { LowStockCard } from "@/components/dashboard/low-stock-card";
 import { RecentProductsTable } from "@/components/dashboard/recent-products-table";
 import { CategoryChartCard } from "@/components/dashboard/category-chart-card";
@@ -13,9 +12,13 @@ import { Button } from "@/components/ui/button";
 import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { exportInventoryReport } from "@/services/reports";
+import { updateProductStock } from "@/services/products";
+import { StockDialog } from "@/components/products/stock-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { Product } from "@/types/product";
 
 const SalesLineChart = dynamic(
   () => import("@/components/charts/sales-line-chart").then((mod) => mod.SalesLineChart),
@@ -44,7 +47,10 @@ export default function DashboardPage() {
   const summary = summaryQuery.data;
   const { locale, t } = useI18n();
   const { token } = useAuth();
+  const queryClient = useQueryClient();
   const [exporting, setExporting] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
   const categoryMap = useMemo(() => {
     const categories = summary?.categories ?? [];
@@ -58,13 +64,29 @@ export default function DashboardPage() {
   const stockValue = summary?.stockValue ?? 0;
   const lowStockCount = summary?.lowStockCount ?? summary?.lowStockItems.length ?? 0;
   const lowStock = summary?.lowStockItems ?? [];
-  const topProducts = summary?.topProducts ?? [];
   const recentProducts = summary?.recentProducts ?? [];
   const categoryChart = summary?.categoryChart ?? [];
   const insightData = summary?.trend ?? [];
 
   const isLoading = summaryQuery.isLoading;
   const stockValueLabel = isLoading ? "--" : formatCurrency(stockValue, locale);
+
+  const stockMutation = useMutation({
+    mutationFn: (values: Parameters<typeof updateProductStock>[1]) => {
+      if (!activeProduct) {
+        return Promise.resolve(null);
+      }
+      return updateProductStock(activeProduct.id, values, token);
+    },
+    onSuccess: () => {
+      toast.success("Estoque atualizado.");
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setStockOpen(false);
+      setActiveProduct(null);
+    },
+    onError: () => toast.error("Nao foi possivel atualizar o estoque."),
+  });
 
   const handleExport = async () => {
     try {
@@ -113,7 +135,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <StatCard
-            title="Total de produtos"
+            title={t("dashboard.stat.totalProducts")}
             value={isLoading ? "--" : totalProducts.toString()}
             delta="+12%"
             icon={Boxes}
@@ -122,7 +144,7 @@ export default function DashboardPage() {
         </div>
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
           <StatCard
-            title="Valor do estoque"
+            title={t("dashboard.stat.stockValue")}
             value={stockValueLabel}
             delta="+6%"
             icon={CircleDollarSign}
@@ -131,7 +153,7 @@ export default function DashboardPage() {
         </div>
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
           <StatCard
-            title="Itens com estoque baixo"
+            title={t("dashboard.stat.lowStock")}
             value={isLoading ? "--" : lowStockCount.toString()}
             delta="-3%"
             icon={PackageCheck}
@@ -141,23 +163,25 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-          <InsightsCard>
-            <SalesLineChart data={insightData} />
-          </InsightsCard>
-        </div>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-          <TopProductsCard products={topProducts} categoryMap={categoryMap} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-          <RecentProductsTable products={recentProducts} categoryMap={categoryMap} />
+        <div className="grid gap-4">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+            <InsightsCard>
+              <SalesLineChart data={insightData} />
+            </InsightsCard>
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+            <RecentProductsTable products={recentProducts} categoryMap={categoryMap} />
+          </div>
         </div>
         <div className="grid gap-4">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-            <LowStockCard products={lowStock} />
+            <LowStockCard
+              products={lowStock}
+              onRestock={(product) => {
+                setActiveProduct(product);
+                setStockOpen(true);
+              }}
+            />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
             <CategoryChartCard>
@@ -168,6 +192,22 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {activeProduct ? (
+        <StockDialog
+          open={stockOpen}
+          onOpenChange={(open) => {
+            setStockOpen(open);
+            if (!open) {
+              setActiveProduct(null);
+            }
+          }}
+          defaultStock={activeProduct.stock}
+          onSubmit={async (values) => {
+            await stockMutation.mutateAsync(values);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

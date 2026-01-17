@@ -162,12 +162,12 @@ export function Topbar() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-        <div className="flex h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-xs text-muted-foreground shadow-sm">
+        <div className="flex h-12 items-center gap-2 rounded-xl border border-border bg-white px-3 text-xs text-muted-foreground shadow-sm">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
           {t("topbar.updatedAt", { minutes: updatedMinutes })}
         </div>
         <Select value={locale} onValueChange={(value) => setLocale(value as "pt-BR" | "en-US")}>
-          <SelectTrigger className="h-11 w-[110px] rounded-xl bg-white text-sm shadow-sm">
+          <SelectTrigger className="h-12 w-[110px] rounded-xl bg-white text-sm shadow-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -178,7 +178,7 @@ export function Topbar() {
         <Button
           variant="ghost"
           size="icon-lg"
-          className="h-11 w-11 rounded-xl border border-border bg-white"
+          className="h-12 w-12 rounded-xl border border-border bg-white"
         >
           <Bell size={18} />
         </Button>
@@ -187,12 +187,12 @@ export function Topbar() {
             <Button
               variant="ghost"
               className={cn(
-                "flex h-11 items-center gap-3 rounded-xl border border-border bg-white px-3",
+                "flex h-12 items-center gap-3 rounded-xl border border-border bg-white px-3",
                 "min-w-[190px] justify-between",
               )}
             >
               <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
+                <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {initials || "HS"}
                   </AvatarFallback>

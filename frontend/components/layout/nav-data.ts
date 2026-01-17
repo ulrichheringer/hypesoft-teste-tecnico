@@ -1,36 +1,56 @@
-import { BadgeDollarSign, HelpCircle, LayoutDashboard, Package, Shapes } from "lucide-react";
+import {
+  BadgeDollarSign,
+  HelpCircle,
+  LayoutDashboard,
+  Package,
+  Shapes,
+  type LucideIcon,
+} from "lucide-react";
+import type { MessageKey } from "@/lib/i18n";
 
-export const navSections = [
+type NavItem = {
+  labelKey: MessageKey;
+  href: string;
+  icon: LucideIcon;
+  disabled?: boolean;
+};
+
+type NavSection = {
+  labelKey: MessageKey;
+  items: NavItem[];
+};
+
+export const navSections: NavSection[] = [
   {
-    label: "General",
+    labelKey: "nav.general",
     items: [
       {
-        label: "Dashboard",
+        labelKey: "nav.dashboard",
         href: "/",
         icon: LayoutDashboard,
       },
     ],
   },
   {
-    label: "Shop",
+    labelKey: "nav.shop",
     items: [
       {
-        label: "Produtos",
+        labelKey: "nav.products",
         href: "/products",
         icon: Package,
       },
       {
-        label: "Categorias",
+        labelKey: "nav.categories",
         href: "/categories",
         icon: Shapes,
       },
     ],
   },
   {
-    label: "Support",
+    labelKey: "nav.support",
     items: [
       {
-        label: "Ajuda",
+        labelKey: "nav.help",
         href: "/help",
         icon: HelpCircle,
       },
@@ -38,8 +58,8 @@ export const navSections = [
   },
 ];
 
-export const brand = {
+export const brand: { name: string; taglineKey: MessageKey; icon: LucideIcon } = {
   name: "Hypesoft",
-  tagline: "Product Ops",
+  taglineKey: "nav.tagline",
   icon: BadgeDollarSign,
 };

@@ -1,4 +1,7 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import {
   Table,
   TableBody,
@@ -9,50 +12,57 @@ import {
 } from "@/components/ui/table";
 import type { Product } from "@/types/product";
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-
 type RecentProductsTableProps = {
   products: Product[];
   categoryMap: Record<string, string>;
 };
 
 export function RecentProductsTable({ products, categoryMap }: RecentProductsTableProps) {
+  const { locale, t } = useI18n();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-white/95 shadow-sm">
       <div className="flex items-center justify-between px-6 pt-5">
         <div>
-          <p className="font-display text-base font-semibold text-foreground">Ultimos produtos</p>
-          <p className="text-xs text-muted-foreground">Atividades recentes no catalogo</p>
+          <p className="font-display text-base font-semibold text-foreground">
+            {t("dashboard.recent.title")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("dashboard.recent.subtitle")}
+          </p>
         </div>
         <Badge variant="secondary" className="rounded-full">
-          Ultimos 7 dias
+          {t("dashboard.recent.badge")}
         </Badge>
       </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Produto</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Estoque</TableHead>
-            <TableHead className="text-right">Valor</TableHead>
+            <TableHead>{t("dashboard.table.product")}</TableHead>
+            <TableHead>{t("dashboard.table.category")}</TableHead>
+            <TableHead>{t("dashboard.table.stock")}</TableHead>
+            <TableHead className="text-right">{t("dashboard.table.value")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {products.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                Sem produtos cadastrados.
+                {t("dashboard.table.empty")}
               </TableCell>
             </TableRow>
           ) : (
             products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell className="font-medium text-foreground">{product.name}</TableCell>
-                <TableCell>{categoryMap[product.categoryId] || "Categoria"}</TableCell>
+                <TableCell>
+                  {categoryMap[product.categoryId] || t("dashboard.table.category")}
+                </TableCell>
                 <TableCell>
                   <Badge
                     className={
@@ -61,7 +71,7 @@ export function RecentProductsTable({ products, categoryMap }: RecentProductsTab
                         : "rounded-full bg-emerald-100 text-emerald-700"
                     }
                   >
-                    {product.stock} un
+                    {t("dashboard.units", { count: product.stock })}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right text-foreground">

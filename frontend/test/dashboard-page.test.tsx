@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import DashboardPage from "@/app/page";
@@ -34,7 +35,12 @@ vi.mock("@/hooks/use-dashboard-summary", () => ({
 
 describe("DashboardPage", () => {
   it("renders header and export action", () => {
-    render(<DashboardPage />);
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <DashboardPage />
+      </QueryClientProvider>,
+    );
 
     expect(screen.getByText("dashboard.title")).toBeInTheDocument();
     expect(screen.getByText("dashboard.exportPdf")).toBeInTheDocument();
