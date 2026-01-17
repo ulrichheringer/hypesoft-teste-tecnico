@@ -1,6 +1,11 @@
 "use client";
 
-import type { ChangeEvent, FocusEvent } from "react";
+import type {
+  ChangeEvent,
+  ClipboardEvent,
+  FocusEvent,
+  KeyboardEvent,
+} from "react";
 import { useMemo, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -27,6 +32,7 @@ export function CurrencyInput({
   onBlur,
 }: CurrencyInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const maxDigits = 12;
 
   const { formatter, symbol, decimal, group } = useMemo(() => {
     const nextFormatter = new Intl.NumberFormat(locale, {
@@ -44,37 +50,106 @@ export function CurrencyInput({
     };
   }, [currency, locale]);
 
+  const toDigits = (nextValue: number) => {
+    if (!Number.isFinite(nextValue)) {
+      return "0";
+    }
+
+    const cents = Math.round(Math.abs(nextValue) * 100);
+    return cents.toString();
+  };
+
+  const toNumber = (digits: string) => {
+    const normalized = digits === "" ? "0" : digits;
+    return Number.parseInt(normalized, 10) / 100;
+  };
+
+  const clampDigits = (digits: string) =>
+    digits.length > maxDigits ? digits.slice(0, maxDigits) : digits;
+
+  const setCaretToEnd = () => {
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) {
+        return;
+      }
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+  };
+
+  const digits = toDigits(value);
+  const numericValue = toNumber(digits);
+
   const displayValue = useMemo(() => {
-    const parts = formatter.formatToParts(value);
+    const parts = formatter.formatToParts(numericValue);
     return parts
       .filter((part) => part.type !== "currency")
       .map((part) => part.value)
       .join("")
       .replace(/\u00a0/g, " ")
       .trim();
-  }, [formatter, value]);
+  }, [formatter, numericValue]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const raw = event.target.value;
     const normalized = raw
       .replace(/\s/g, "")
       .replace(new RegExp(`\\${group}`, "g"), "")
-      .replace(decimal, ".")
-      .replace(/[^0-9.]/g, "");
+      .replace(decimal, "")
+      .replace(/\D/g, "");
 
-    const parsed = Number.parseFloat(normalized);
-    onValueChange(Number.isNaN(parsed) ? 0 : parsed);
+    const nextDigits = clampDigits(normalized.replace(/^0+(?=\d)/, ""));
+    onValueChange(toNumber(nextDigits));
+    setCaretToEnd();
+  };
 
-    requestAnimationFrame(() => {
-      if (inputRef.current) {
-        const end = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(end, end);
-      }
-    });
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key >= "0" && event.key <= "9") {
+      event.preventDefault();
+      const nextDigits = clampDigits(digits === "0" ? event.key : `${digits}${event.key}`);
+      onValueChange(toNumber(nextDigits));
+      setCaretToEnd();
+      return;
+    }
+
+    if (event.key === "Backspace" || event.key === "Delete") {
+      event.preventDefault();
+      const nextDigits = digits.length <= 1 ? "0" : digits.slice(0, -1);
+      onValueChange(toNumber(nextDigits));
+      setCaretToEnd();
+      return;
+    }
+
+    if (
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowRight" ||
+      event.key === "Home" ||
+      event.key === "End" ||
+      event.key === "Tab"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
+  const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) {
+      return;
+    }
+    const base = digits === "0" ? "" : digits;
+    const nextDigits = clampDigits(`${base}${pasted}`);
+    onValueChange(toNumber(nextDigits));
+    setCaretToEnd();
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
-    event.currentTarget.select();
+    const input = event.currentTarget;
+    const end = input.value.length;
+    input.setSelectionRange(end, end);
   };
 
   return (
@@ -87,6 +162,8 @@ export function CurrencyInput({
         id={id}
         value={displayValue}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onFocus={handleFocus}
         onBlur={onBlur}
         placeholder={placeholder}
