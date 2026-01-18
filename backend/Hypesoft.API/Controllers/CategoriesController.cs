@@ -9,7 +9,7 @@ namespace Hypesoft.API.Controllers;
 
 [ApiController]
 [Route("api/categories")]
-[Authorize(Policy = "User")]
+[Authorize(Policy = "Admin")]
 public sealed class CategoriesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]

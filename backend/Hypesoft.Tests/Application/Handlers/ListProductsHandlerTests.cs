@@ -62,5 +62,17 @@ public class ListProductsHandlerTests
 
         public Task<IReadOnlyList<Product>> ListLowStockAsync(int threshold, CancellationToken ct = default)
             => throw new NotImplementedException();
+
+        public Task<long> CountAsync(CancellationToken ct = default)
+            => throw new NotImplementedException();
+
+        public Task<decimal> GetTotalStockValueAsync(CancellationToken ct = default)
+            => throw new NotImplementedException();
+
+        public Task<int> CountLowStockAsync(int threshold, CancellationToken ct = default)
+            => throw new NotImplementedException();
+
+        public Task<IReadOnlyList<CategoryProductCount>> CountByCategoryAsync(CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

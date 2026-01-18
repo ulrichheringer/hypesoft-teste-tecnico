@@ -12,7 +12,11 @@ public class Product
     public Guid CategoryId { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UnixEpoch;
 
-    protected Product() { }
+    protected Product()
+    {
+        Name = string.Empty;
+        Description = string.Empty;
+    }
 
     public Product(
         string name,

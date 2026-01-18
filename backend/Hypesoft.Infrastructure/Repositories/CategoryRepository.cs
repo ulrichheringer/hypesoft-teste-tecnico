@@ -139,8 +139,6 @@ public sealed class CategoryRepository(HypesoftDbContext db, IDistributedCache c
         return db.Categories.AsNoTracking().AnyAsync(x => x.Name.ToLower() == normalized, ct);
     }
 
-    private sealed record CacheList<T>(List<T> Items, long Total);
-
     private sealed record CategoryCacheItem(Guid Id, string Name)
     {
         public static CategoryCacheItem From(Category category)

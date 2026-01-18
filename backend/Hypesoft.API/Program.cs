@@ -8,15 +8,12 @@ using Hypesoft.Infrastructure.Data;
 using Hypesoft.Infrastructure.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Scalar;
 using Hypesoft.API.Auth;
 using Hypesoft.API.OpenApi;
 using Hypesoft.API.Middlewares;
-using Hypesoft.Application.Interfaces;
 using Hypesoft.Application.Mapping;
 using Hypesoft.API.Observability;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
+using Prometheus;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,8 +21,10 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using QuestPDF.Infrastructure;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -45,13 +44,47 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<KeycloakSecurityDocumentTransformer>();
 });
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Hypesoft API",
+        Version = "v1",
+        Description = "API de Gestão de Produtos - Sistema Hypesoft"
+    });
+    
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira o token JWT obtido do Keycloak"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
     ?? Array.Empty<string>();
-var allowAnyOrigin = builder.Configuration.GetValue("Cors:AllowAnyOrigin", builder.Environment.IsDevelopment())
-    || corsOrigins.Length == 0
-    || corsOrigins.Any(origin => string.Equals(origin, "*", StringComparison.Ordinal));
+var allowAnyOrigin = corsOrigins.Length == 0;
 
 builder.Services.AddCors(options =>
 {
@@ -68,6 +101,7 @@ builder.Services.AddCors(options =>
 
         policy.AllowAnyHeader()
             .AllowAnyMethod();
+        policy.AllowCredentials();
     });
 });
 
@@ -79,7 +113,6 @@ builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
-// DbContext MongoDB EF Core Provider
 var mongoConn = builder.Configuration["Mongo:ConnectionString"]!;
 var mongoDb = builder.Configuration["Mongo:Database"]!;
 
@@ -99,18 +132,18 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = redisConnection;
 });
 
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("Hypesoft.API"))
-    .WithMetrics(metrics =>
+try
+{
+    Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
     {
-        metrics.AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddMeter(RumMetrics.MeterName)
-            .AddPrometheusExporter();
+        { "app", "hypesoft-api" }
     });
+}
+catch (InvalidOperationException)
+{
+}
 
-builder.Services.AddMediatR(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly);
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Hypesoft.Application.DTOs.CategoryDto).Assembly));
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddFluentValidationAutoValidation();
@@ -119,6 +152,9 @@ builder.Services.AddValidatorsFromAssembly(typeof(Hypesoft.Application.Validator
 var keycloakAuthority = builder.Configuration["Keycloak:Authority"]!;
 var keycloakAudience = builder.Configuration["Keycloak:Audience"]!;
 var requireHttpsMetadata = builder.Configuration.GetValue("Keycloak:RequireHttpsMetadata", true);
+var keycloakAdditionalIssuers = builder.Configuration
+    .GetSection("Keycloak:AdditionalIssuers")
+    .Get<string[]>() ?? [];
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -127,6 +163,14 @@ builder.Services
         options.Authority = keycloakAuthority;
         options.Audience = keycloakAudience;
         options.RequireHttpsMetadata = requireHttpsMetadata;
+        if (keycloakAdditionalIssuers.Length > 0)
+        {
+            options.TokenValidationParameters.ValidIssuers = new[]
+                { keycloakAuthority }
+                .Concat(keycloakAdditionalIssuers)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
     });
 
 builder.Services.AddAuthorization(options =>
@@ -144,8 +188,17 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Hypesoft API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "Hypesoft API - Swagger UI";
+        options.EnablePersistAuthorization();
+    });
 }
 
+app.UseSecurityHeaders();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
@@ -158,7 +211,13 @@ app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health");
-app.MapPrometheusScrapingEndpoint();
+app.UseHttpMetrics(options =>
+{
+    options.AddCustomLabel("host", context => context.Request.Host.Host);
+});
+app.MapMetrics();
 app.MapControllers().RequireCors("Frontend");
 
 app.Run();
+
+public partial class Program { }

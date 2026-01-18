@@ -8,7 +8,7 @@ namespace Hypesoft.API.Controllers;
 
 [ApiController]
 [Route("api/search")]
-[Authorize(Policy = "User")]
+[Authorize(Policy = "Admin")]
 public sealed class SearchController(IMediator mediator) : ControllerBase
 {
     [HttpGet]

@@ -13,6 +13,10 @@ public sealed class ProductRepositoryStub : IProductRepository
     public (IReadOnlyList<Product> Items, long Total) ListResult { get; set; }
         = (Array.Empty<Product>(), 0);
     public IReadOnlyList<Product> LowStockResult { get; set; } = Array.Empty<Product>();
+    public long CountResult { get; set; } = 0;
+    public decimal TotalStockValueResult { get; set; } = 0m;
+    public int LowStockCountResult { get; set; } = 0;
+    public IReadOnlyList<CategoryProductCount> CountByCategoryResult { get; set; } = Array.Empty<CategoryProductCount>();
 
     public Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => Task.FromResult(Product);
@@ -48,6 +52,18 @@ public sealed class ProductRepositoryStub : IProductRepository
 
     public Task<IReadOnlyList<Product>> ListLowStockAsync(int threshold, CancellationToken ct = default)
         => Task.FromResult(LowStockResult);
+
+    public Task<long> CountAsync(CancellationToken ct = default)
+        => Task.FromResult(CountResult);
+
+    public Task<decimal> GetTotalStockValueAsync(CancellationToken ct = default)
+        => Task.FromResult(TotalStockValueResult);
+
+    public Task<int> CountLowStockAsync(int threshold, CancellationToken ct = default)
+        => Task.FromResult(LowStockCountResult);
+
+    public Task<IReadOnlyList<CategoryProductCount>> CountByCategoryAsync(CancellationToken ct = default)
+        => Task.FromResult(CountByCategoryResult);
 }
 
 public sealed class CategoryRepositoryStub : ICategoryRepository

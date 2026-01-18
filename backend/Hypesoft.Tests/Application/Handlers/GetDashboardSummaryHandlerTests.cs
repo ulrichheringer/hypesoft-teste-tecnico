@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Hypesoft.Application.Handlers.Dashboard;
-using Hypesoft.Application.Interfaces;
+using Hypesoft.Domain.Repositories;
 using Hypesoft.Application.Queries.Dashboard;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Tests.Support;
@@ -19,6 +19,7 @@ public class GetDashboardSummaryHandlerTests
             1,
             20m,
             1,
+            new[] { product },
             new[] { product },
             new[] { product },
             new[] { product },

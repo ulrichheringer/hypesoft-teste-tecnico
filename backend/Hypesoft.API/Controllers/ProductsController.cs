@@ -9,7 +9,7 @@ namespace Hypesoft.API.Controllers;
 
 [ApiController]
 [Route("api/products")]
-[Authorize(Policy = "User")]
+[Authorize(Policy = "Admin")]
 public sealed class ProductsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]

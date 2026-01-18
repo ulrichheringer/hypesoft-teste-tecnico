@@ -5,7 +5,10 @@ public class Category
     public Guid Id { get; private set; }
     public string Name { get; private set; }
 
-    protected Category() { }
+    protected Category()
+    {
+        Name = string.Empty;
+    }
 
     public Category(string name)
     {

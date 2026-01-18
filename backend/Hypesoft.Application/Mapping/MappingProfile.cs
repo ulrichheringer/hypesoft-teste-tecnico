@@ -1,7 +1,7 @@
 using AutoMapper;
 using Hypesoft.Application.DTOs;
 using Hypesoft.Domain.Entities;
-using Hypesoft.Application.Interfaces;
+using Hypesoft.Domain.Repositories;
 
 namespace Hypesoft.Application.Mapping;
 

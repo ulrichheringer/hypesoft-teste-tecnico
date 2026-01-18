@@ -9,6 +9,6 @@ public sealed class CreateCategoryRequestValidator : AbstractValidator<CreateCat
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("O nome é obrigatório.")
-            .MaximumLength(80).WithMessage("O nome deve conter no minímo 80 caracteres.");
+            .MaximumLength(80).WithMessage("O nome deve conter no máximo 80 caracteres.");
     }
 }

@@ -19,4 +19,11 @@ public interface IProductRepository
     Task DeleteAsync(Guid id, CancellationToken ct = default);
 
     Task<IReadOnlyList<Product>> ListLowStockAsync(int threshold, CancellationToken ct = default);
+
+    Task<long> CountAsync(CancellationToken ct = default);
+    Task<decimal> GetTotalStockValueAsync(CancellationToken ct = default);
+    Task<int> CountLowStockAsync(int threshold, CancellationToken ct = default);
+    Task<IReadOnlyList<CategoryProductCount>> CountByCategoryAsync(CancellationToken ct = default);
 }
+
+public sealed record CategoryProductCount(Guid CategoryId, int Count);

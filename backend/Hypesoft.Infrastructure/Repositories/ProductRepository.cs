@@ -167,7 +167,77 @@ public sealed class ProductRepository(HypesoftDbContext db, IDistributedCache ca
         return items;
     }
 
-    private sealed record CacheList<T>(List<T> Items, long Total);
+    public async Task<long> CountAsync(CancellationToken ct = default)
+    {
+        var stamp = await GetStampAsync(ct);
+        var cacheKey = $"products:count:{stamp}";
+        var cached = await cache.GetStringSafeAsync(cacheKey, ct);
+        if (long.TryParse(cached, out var count))
+        {
+            return count;
+        }
+
+        count = await db.Products.AsNoTracking().LongCountAsync(ct);
+        await cache.SetStringSafeAsync(cacheKey, count.ToString(), CacheOptions, ct);
+        return count;
+    }
+
+    public async Task<decimal> GetTotalStockValueAsync(CancellationToken ct = default)
+    {
+        var stamp = await GetStampAsync(ct);
+        var cacheKey = $"products:stock-value:{stamp}";
+        var cached = await cache.GetStringSafeAsync(cacheKey, ct);
+        if (decimal.TryParse(cached, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
+        {
+            return value;
+        }
+
+        var products = await db.Products.AsNoTracking()
+            .Select(p => new { p.Price, p.Stock })
+            .ToListAsync(ct);
+        value = products.Sum(p => p.Price * p.Stock);
+
+        await cache.SetStringSafeAsync(cacheKey, value.ToString(System.Globalization.CultureInfo.InvariantCulture), CacheOptions, ct);
+        return value;
+    }
+
+    public async Task<int> CountLowStockAsync(int threshold, CancellationToken ct = default)
+    {
+        var stamp = await GetStampAsync(ct);
+        var cacheKey = $"products:low-stock-count:{threshold}:{stamp}";
+        var cached = await cache.GetStringSafeAsync(cacheKey, ct);
+        if (int.TryParse(cached, out var count))
+        {
+            return count;
+        }
+
+        count = await db.Products.AsNoTracking().CountAsync(p => p.Stock < threshold, ct);
+        await cache.SetStringSafeAsync(cacheKey, count.ToString(), CacheOptions, ct);
+        return count;
+    }
+
+    public async Task<IReadOnlyList<CategoryProductCount>> CountByCategoryAsync(CancellationToken ct = default)
+    {
+        var stamp = await GetStampAsync(ct);
+        var cacheKey = $"products:category-counts:{stamp}";
+        var cached = await cache.GetRecordAsync<List<CategoryProductCount>>(cacheKey, ct);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
+        var categoryIds = await db.Products.AsNoTracking()
+            .Select(p => p.CategoryId)
+            .ToListAsync(ct);
+
+        var counts = categoryIds
+            .GroupBy(id => id)
+            .Select(g => new CategoryProductCount(g.Key, g.Count()))
+            .ToList();
+
+        await cache.SetRecordAsync(cacheKey, counts, CacheOptions, ct);
+        return counts;
+    }
 
     private sealed record ProductCacheItem(
         Guid Id,
