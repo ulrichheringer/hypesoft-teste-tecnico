@@ -48,7 +48,19 @@ export function Topbar() {
     (results?.products.length ?? 0) > 0 || (results?.categories.length ?? 0) > 0;
   const showResults = isAdmin && open && normalizedSearch.length > 1;
 
-  const updatedMinutes = 2;
+  const [updatedMinutes, setUpdatedMinutes] = useState(0);
+  const [lastUpdate] = useState(() => Date.now());
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const minutes = Math.floor((Date.now() - lastUpdate) / 60000);
+      setUpdatedMinutes(minutes);
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000);
+    return () => clearInterval(interval);
+  }, [lastUpdate]);
+
   const initials = [profile?.firstName, profile?.lastName]
     .filter(Boolean)
     .map((part) => part?.[0])

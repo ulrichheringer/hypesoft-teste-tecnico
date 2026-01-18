@@ -6,7 +6,6 @@ export const messages = {
   "pt-BR": {
     "dashboard.title": "Dashboard",
     "dashboard.subtitle": "Acompanhe indicadores e mantenha o estoque sob controle.",
-    "dashboard.dateRange": "Últimos 30 dias",
     "dashboard.exportPdf": "Exportar PDF",
     "dashboard.stat.totalProducts": "Total de produtos",
     "dashboard.stat.stockValue": "Valor do estoque",
@@ -38,7 +37,6 @@ export const messages = {
     "nav.products": "Produtos",
     "nav.categories": "Categorias",
     "nav.help": "Ajuda",
-    "nav.tagline": "Product Ops",
     "products.title": "Produtos",
     "products.subtitle": "Controle produtos, estoque e categorizacao.",
     "products.new": "Novo produto",
@@ -50,8 +48,6 @@ export const messages = {
     "categories.searchPlaceholder": "Buscar por nome",
     "topbar.searchPlaceholder": "Buscar produto, categoria ou sku",
     "topbar.updatedAt": "Atualizado ha {minutes} min",
-    "topbar.profile": "Perfil",
-    "topbar.preferences": "Preferencias",
     "topbar.logout": "Sair",
     "topbar.role": "Role: {role}",
     "topbar.defaultRole": "Shop Admin",
@@ -72,14 +68,10 @@ export const messages = {
     "help.faq.category": "Como criar categorias?",
     "help.faq.category.desc":
       "Entre em Categorias, clique em Nova categoria e informe um nome para o grupo.",
-    "help.support.title": "Precisa de suporte?",
-    "help.support.line1": "Entre em contato com a equipe em suporte@hypesoft.com.",
-    "help.support.line2": "Horario de atendimento: seg a sex, 9h as 18h.",
   },
   "en-US": {
     "dashboard.title": "Dashboard",
     "dashboard.subtitle": "Track key indicators and keep stock under control.",
-    "dashboard.dateRange": "Last 30 days",
     "dashboard.exportPdf": "Export PDF",
     "dashboard.stat.totalProducts": "Total products",
     "dashboard.stat.stockValue": "Stock value",
@@ -111,7 +103,6 @@ export const messages = {
     "nav.products": "Products",
     "nav.categories": "Categories",
     "nav.help": "Help",
-    "nav.tagline": "Product Ops",
     "products.title": "Products",
     "products.subtitle": "Manage products, stock, and categories.",
     "products.new": "New product",
@@ -123,8 +114,6 @@ export const messages = {
     "categories.searchPlaceholder": "Search by name",
     "topbar.searchPlaceholder": "Search product, category, or SKU",
     "topbar.updatedAt": "Updated {minutes} min ago",
-    "topbar.profile": "Profile",
-    "topbar.preferences": "Preferences",
     "topbar.logout": "Logout",
     "topbar.role": "Role: {role}",
     "topbar.defaultRole": "Shop Admin",
@@ -145,9 +134,6 @@ export const messages = {
     "help.faq.category": "How to create categories?",
     "help.faq.category.desc":
       "Go to Categories, click New category, and provide a name for the group.",
-    "help.support.title": "Need support?",
-    "help.support.line1": "Contact the team at suporte@hypesoft.com.",
-    "help.support.line2": "Support hours: Mon-Fri, 9am to 6pm.",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

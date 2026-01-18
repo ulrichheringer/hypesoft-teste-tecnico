@@ -16,12 +16,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <main className="flex min-h-0 flex-col gap-6">
               <div className="flex items-center justify-between lg:hidden">
                 <MobileSidebar />
-                <div className="text-right">
-                  <p className="font-display text-base font-semibold text-foreground">
-                    Hypesoft
-                  </p>
-                  <p className="text-xs text-muted-foreground">Product Ops</p>
-                </div>
+                <p className="font-display text-xl font-bold text-foreground">
+                  Hypesoft
+                </p>
               </div>
               <Topbar />
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden">

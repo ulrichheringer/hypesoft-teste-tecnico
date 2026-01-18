@@ -11,7 +11,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
   const { hasRole } = useAuth();
-  const BrandIcon = brand.icon;
 
   const visibleSections = navSections
     .map((section) => ({
@@ -24,16 +23,10 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full w-full flex-col gap-6 rounded-2xl border border-sidebar-border bg-sidebar px-5 py-6 shadow-sm">
-      <div className="flex items-center gap-3 px-1">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <BrandIcon size={20} />
-        </div>
-        <div>
-          <p className="font-display text-lg font-semibold text-sidebar-foreground">
-            {brand.name}
-          </p>
-          <p className="text-xs text-muted-foreground">{t(brand.taglineKey)}</p>
-        </div>
+      <div className="flex items-center justify-center px-1">
+        <p className="font-display text-2xl font-bold text-sidebar-foreground">
+          {brand.name}
+        </p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-6">

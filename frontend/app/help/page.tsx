@@ -44,16 +44,6 @@ export default function HelpPage() {
           </Card>
         ))}
       </div>
-
-      <Card className="rounded-2xl border border-border bg-white/95 shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-display text-base">{t("help.support.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>{t("help.support.line1")}</p>
-          <p>{t("help.support.line2")}</p>
-        </CardContent>
-      </Card>
     </section>
   );
 }

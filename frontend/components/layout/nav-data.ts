@@ -61,8 +61,7 @@ export const navSections: NavSection[] = [
   },
 ];
 
-export const brand: { name: string; taglineKey: MessageKey; icon: LucideIcon } = {
+export const brand: { name: string; icon: LucideIcon } = {
   name: "Hypesoft",
-  taglineKey: "nav.tagline",
   icon: BadgeDollarSign,
 };
