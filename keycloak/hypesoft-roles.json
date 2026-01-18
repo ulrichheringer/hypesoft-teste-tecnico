@@ -1,0 +1,42 @@
+[
+  {
+    "id": "a60d0749-3007-48fa-b937-8835b144a8c8",
+    "name": "uma_authorization",
+    "description": "${role_uma_authorization}",
+    "composite": false,
+    "clientRole": false,
+    "containerId": "e8c5cf05-17dc-40cc-a954-ecc689cc0244"
+  },
+  {
+    "id": "0d35cee5-f056-47f4-bdb2-42f2b8d1f122",
+    "name": "user",
+    "description": "",
+    "composite": false,
+    "clientRole": false,
+    "containerId": "e8c5cf05-17dc-40cc-a954-ecc689cc0244"
+  },
+  {
+    "id": "bfe40dd4-7627-4044-ac12-84baaf56e8c0",
+    "name": "admin",
+    "description": "",
+    "composite": true,
+    "clientRole": false,
+    "containerId": "e8c5cf05-17dc-40cc-a954-ecc689cc0244"
+  },
+  {
+    "id": "87bbc9c4-dde8-44d4-8028-4e30286121f0",
+    "name": "default-roles-hypesoft",
+    "description": "${role_default-roles}",
+    "composite": true,
+    "clientRole": false,
+    "containerId": "e8c5cf05-17dc-40cc-a954-ecc689cc0244"
+  },
+  {
+    "id": "cb5157f1-9c33-4148-b321-da11b8943221",
+    "name": "offline_access",
+    "description": "${role_offline-access}",
+    "composite": false,
+    "clientRole": false,
+    "containerId": "e8c5cf05-17dc-40cc-a954-ecc689cc0244"
+  }
+]
