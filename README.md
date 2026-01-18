@@ -2,6 +2,10 @@
 
 Sistema de gestao de produtos com dashboard, controle de estoque e categorias.
 
+Vídeo de apresentação:
+- Youtube: https://youtu.be/Z02E6Kh0GFE
+- Google Drive: https://drive.google.com/file/d/126LwZovOpMCdUnO89d0VbyDCU1-wZgH1/view?usp=sharing
+
 ## Stack
 
 - **Backend:** .NET 9, MongoDB, Redis, MediatR, FluentValidation
