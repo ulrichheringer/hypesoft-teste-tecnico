@@ -16,17 +16,28 @@ Sistema de gestao de produtos com dashboard, controle de estoque e categorias.
 docker compose up -d
 ```
 
-Aguarde os containers subirem (~2 min na primeira vez).
+## Keycloak
+
+O realm `hypesoft` e importado automaticamente. Nao precisa configurar nada.
+
+### Usuarios
+
+| Usuario | Senha | Role  | Permissoes                          |
+|---------|-------|-------|-------------------------------------|
+| admin   | admin  | admin | Dashboard, Produtos, Categorias     |
+| user    | user | user  | Apenas Dashboard (somente leitura)  |
+
+Console admin: http://localhost:8080 (admin/admin)
 
 ### URLs
 
 | Servico       | URL                              | Credenciais        |
 |---------------|----------------------------------|-------------------|
-| Aplicacao     | http://localhost                 | admin/1234        |
-| Frontend      | http://localhost:3000            | admin/1234        |
+| Aplicacao     | http://localhost                 | admin/admin        |
+| Frontend      | http://localhost:3000            | admin/admin        |
 | API           | http://localhost:5000            | -                 |
 | Swagger       | http://localhost:5000/swagger    | -                 |
-| Scalar        | http://localhost:5000/scalar/v1  | -                 |
+| Scalar        | http://localhost:5000/scalar  | -                 |
 | Keycloak      | http://localhost:8080            | admin/admin       |
 | Grafana       | http://localhost:3001            | admin/admin       |
 | Mongo Express | http://localhost:8081            | -                 |
@@ -37,13 +48,22 @@ Aguarde os containers subirem (~2 min na primeira vez).
 ## Documentacao da API
 
 ### Swagger
-Acesse http://localhost:5000/swagger para documentacao interativa.
+Acesse http://localhost:5000/swagger
 
 ### Scalar
-Acesse http://localhost:5000/scalar/v1 para uma interface moderna de documentacao.
+Acesse http://localhost:5000/scalar
 
 Para autenticar nas ferramentas:
 1. Obtenha um token no Keycloak
+   Exemplo com curl:
+   ```bash
+   curl -s -X POST "http://localhost:8080/realms/hypesoft/protocol/openid-connect/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "grant_type=password" \
+     -d "client_id=hypesoft-frontend" \
+     -d "username=admin" \
+     -d "password=admin"
+   ```
 2. Clique em "Authorize" e insira: `Bearer {token}`
 
 ## Desenvolvimento Local
@@ -70,19 +90,6 @@ bun install
 bun dev
 ```
 
-## Keycloak
-
-O realm `hypesoft` e importado automaticamente. Nao precisa configurar nada.
-
-### Usuarios
-
-| Usuario | Senha | Role  | Permissoes                          |
-|---------|-------|-------|-------------------------------------|
-| admin   | 1234  | admin | Dashboard, Produtos, Categorias     |
-| user    | 1234  | user  | Apenas Dashboard (somente leitura)  |
-
-Console admin: http://localhost:8080 (admin/admin)
-
 ## Observabilidade
 
 ### Grafana
@@ -92,7 +99,7 @@ Acesse http://localhost:3001 (admin/admin).
 Dashboards disponiveis:
 - **Hypesoft Overview:** metricas combinadas
 - **API Overview:** metricas do .NET
-- **Frontend Overview:** metricas do Next.js
+- **Frontend Overview:** metricas do Next.js, como CPU, RAM, etc
 
 ### Prometheus
 
@@ -106,7 +113,7 @@ Regras configuradas para:
 - Latencia alta (p95 >1s)
 - Memoria acima de 500MB
 
-Para alertas por email, configure SMTP no Grafana.
+Para alertas por email, configure SMTP no .env
 
 ## Testes
 
@@ -127,7 +134,6 @@ cd frontend
 bun run test
 ```
 
-- 39 testes (componentes + hooks)
 
 ## Estrutura do Projeto
 
@@ -154,7 +160,7 @@ docs/
 ## ADRs
 
 Decisoes arquiteturais documentadas em `docs/ADR.md`:
-- Clean Architecture com CQRS
-- MongoDB com EF Core
-- Keycloak para autenticacao
-- Redis para cache
+- Clean Architecture com CQRS (requisito)
+- MongoDB com EF Core (requisito)
+- Keycloak para autenticacao (requisito)
+- Redis para cache (decisão minha)
