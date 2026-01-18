@@ -1,0 +1,220 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Hypesoft Service Health
+    folder: Hypesoft Alerts
+    interval: 1m
+    rules:
+      # Alert when API is down for more than 2 minutes
+      - uid: api-down-alert
+        title: API Service Down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: up{job="hypesoft-api"}
+              instant: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params:
+                      - 1
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: C
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "Hypesoft API is DOWN"
+          description: "The Hypesoft API service has been down for more than 2 minutes."
+        labels:
+          severity: critical
+          service: api
+
+      # Alert when Frontend is down for more than 2 minutes
+      - uid: frontend-down-alert
+        title: Frontend Service Down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: up{job="hypesoft-frontend"}
+              instant: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params:
+                      - 1
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: C
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "Hypesoft Frontend is DOWN"
+          description: "The Hypesoft Frontend service has been down for more than 2 minutes."
+        labels:
+          severity: critical
+          service: frontend
+
+  - orgId: 1
+    name: Hypesoft Performance
+    folder: Hypesoft Alerts
+    interval: 1m
+    rules:
+      # Alert when API response time is too high (p95 > 1s)
+      - uid: api-high-latency-alert
+        title: API High Response Time
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(microsoft_aspnetcore_hosting_http_server_request_duration_bucket{job="hypesoft-api"}[5m])) by (le))
+              instant: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 1
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "API response time is high"
+          description: "The API p95 response time has been above 1 second for 5 minutes."
+        labels:
+          severity: warning
+          service: api
+
+      # Alert when memory usage is above 500MB
+      - uid: api-high-memory-alert
+        title: API High Memory Usage
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: process_working_set_bytes{job="hypesoft-api"} / 1024 / 1024
+              instant: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 500
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "API memory usage is high"
+          description: "The API is using more than 500MB of memory."
+        labels:
+          severity: warning
+          service: api

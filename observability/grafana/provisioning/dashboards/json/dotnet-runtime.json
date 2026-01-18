@@ -1,0 +1,261 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "🔧 Runtime Stats",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "system_runtime_threadpool_thread_count{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "ThreadPool Threads",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "process_num_threads{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "Total Threads",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "system_runtime_assembly_count{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "Assemblies Loaded",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 100 }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 5,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "system_runtime_exception_count_total{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "Total Exceptions",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "id": 6,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "system_runtime_active_timer_count{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "Active Timers",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "id": 7,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "system_runtime_methods_jitted_count{job=\"hypesoft-api\"}", "refId": "A" }],
+      "title": "JIT Methods",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 8,
+      "title": "🗑️ Garbage Collection",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never", "stacking": { "mode": "normal" } },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 9,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_runtime_gen_0_size{job=\"hypesoft-api\"}", "legendFormat": "Gen 0", "refId": "A" },
+        { "expr": "system_runtime_gen_1_size{job=\"hypesoft-api\"}", "legendFormat": "Gen 1", "refId": "B" },
+        { "expr": "system_runtime_gen_2_size{job=\"hypesoft-api\"}", "legendFormat": "Gen 2", "refId": "C" },
+        { "expr": "system_runtime_loh_size{job=\"hypesoft-api\"}", "legendFormat": "LOH", "refId": "D" },
+        { "expr": "system_runtime_poh_size{job=\"hypesoft-api\"}", "legendFormat": "POH", "refId": "E" }
+      ],
+      "title": "Heap Size por Geração",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 10,
+      "options": { "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "increase(system_runtime_gen_0_gc_count_total{job=\"hypesoft-api\"}[5m])", "legendFormat": "Gen 0", "refId": "A" },
+        { "expr": "increase(system_runtime_gen_1_gc_count_total{job=\"hypesoft-api\"}[5m])", "legendFormat": "Gen 1", "refId": "B" },
+        { "expr": "increase(system_runtime_gen_2_gc_count_total{job=\"hypesoft-api\"}[5m])", "legendFormat": "Gen 2", "refId": "C" }
+      ],
+      "title": "GC Collections (5min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "id": 11,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_runtime_gc_committed{job=\"hypesoft-api\"}", "legendFormat": "Committed", "refId": "A" },
+        { "expr": "system_runtime_gc_heap_size{job=\"hypesoft-api\"}", "legendFormat": "Heap Size", "refId": "B" },
+        { "expr": "dotnet_total_memory_bytes{job=\"hypesoft-api\"}", "legendFormat": "Managed Memory", "refId": "C" }
+      ],
+      "title": "GC Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "id": 12,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_runtime_time_in_gc{job=\"hypesoft-api\"} / 100", "legendFormat": "Time in GC %", "refId": "A" },
+        { "expr": "system_runtime_gc_fragmentation{job=\"hypesoft-api\"} / 100", "legendFormat": "Fragmentation %", "refId": "B" }
+      ],
+      "title": "GC Time & Fragmentation",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "id": 13,
+      "title": "⚡ JIT & ThreadPool",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "id": 14,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [{ "expr": "system_runtime_il_bytes_jitted{job=\"hypesoft-api\"}", "legendFormat": "IL Bytes JITted", "refId": "A" }],
+      "title": "JIT IL Compiled Size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "id": 15,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_runtime_threadpool_queue_length{job=\"hypesoft-api\"}", "legendFormat": "Queue Length", "refId": "A" },
+        { "expr": "rate(system_runtime_threadpool_completed_items_count_total{job=\"hypesoft-api\"}[1m])", "legendFormat": "Completed/min", "refId": "B" }
+      ],
+      "title": "ThreadPool Queue",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "id": 16,
+      "title": "🌐 HTTP Client",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 17,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_net_http_current_requests{job=\"hypesoft-api\"}", "legendFormat": "Current Requests", "refId": "A" },
+        { "expr": "rate(system_net_http_requests_started_total{job=\"hypesoft-api\"}[1m])", "legendFormat": "Requests/min", "refId": "B" }
+      ],
+      "title": "HTTP Client Requests",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 18,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "system_net_http_http11_connections_current_total{job=\"hypesoft-api\"}", "legendFormat": "HTTP/1.1", "refId": "A" },
+        { "expr": "system_net_http_http20_connections_current_total{job=\"hypesoft-api\"}", "legendFormat": "HTTP/2", "refId": "B" }
+      ],
+      "title": "HTTP Connections",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["hypesoft", "dotnet", "runtime"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "Hypesoft API - .NET Runtime",
+  "uid": "hypesoft-dotnet-runtime",
+  "version": 1
+}
