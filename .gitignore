@@ -1,12 +1,37 @@
+# .NET
 bin/
 obj/
 /packages/
+*.user
+*.suo
+.vs/
+
+# IDE
+.idea/
 riderModule.iml
 /_ReSharper.Caches/
-frontend/node_modules/
-frontend/.next/
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+*.swp
+
+# Node
+node_modules/
+.next/
+.turbo/
+dist/
+coverage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test
+playwright-report/
+test-results/
