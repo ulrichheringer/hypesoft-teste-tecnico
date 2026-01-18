@@ -4,19 +4,44 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using Hypesoft.Infrastructure.Data;
 
 namespace Hypesoft.Tests.Integration;
 
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private const string TestDatabaseName = "hypesoft_test";
+    private const string MongoConnectionString = "mongodb://localhost:27017";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
         {
+            // Remove ALL DbContext-related registrations
+            var descriptorsToRemove = services
+                .Where(d => 
+                    d.ServiceType == typeof(DbContextOptions<HypesoftDbContext>) ||
+                    d.ServiceType == typeof(HypesoftDbContext) ||
+                    d.ServiceType.FullName?.Contains("DbContextOptions") == true)
+                .ToList();
+
+            foreach (var descriptor in descriptorsToRemove)
+            {
+                services.Remove(descriptor);
+            }
+
+            // Register fresh DbContext with test database using connection string
+            services.AddDbContext<HypesoftDbContext>((sp, options) =>
+            {
+                options.UseMongoDB(MongoConnectionString, TestDatabaseName);
+            }, ServiceLifetime.Scoped);
+
             services.AddAuthentication("Test")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
 
@@ -33,6 +58,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     policy.RequireAuthenticatedUser());
             });
         });
+    }
+
+    public async Task CleanupDatabaseAsync()
+    {
+        var mongoClient = new MongoClient(MongoConnectionString);
+        await mongoClient.DropDatabaseAsync(TestDatabaseName);
     }
 }
 

@@ -5,14 +5,20 @@ using Hypesoft.Application.DTOs;
 
 namespace Hypesoft.Tests.Integration;
 
-public class CategoriesIntegrationTests : IClassFixture<TestWebApplicationFactory>
+public class CategoriesIntegrationTests : IClassFixture<TestWebApplicationFactory>, IAsyncLifetime
 {
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
     public CategoriesIntegrationTests(TestWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _factory.CleanupDatabaseAsync();
 
     [Fact]
     public async Task ListCategories_ReturnsOk()

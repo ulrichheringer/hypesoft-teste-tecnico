@@ -34,10 +34,6 @@ public sealed class ExceptionHandlingMiddleware(
                 logger.LogWarning(notFoundException, "Resource not found");
                 await WriteProblemAsync(context, StatusCodes.Status404NotFound, "Not found", notFoundException.Message);
                 return;
-            case InvalidOperationException conflictException:
-                logger.LogWarning(conflictException, "Conflict");
-                await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflict", conflictException.Message);
-                return;
             default:
                 logger.LogError(ex, "Unhandled exception");
                 await WriteProblemAsync(context, StatusCodes.Status500InternalServerError, "Unexpected error", "An unexpected error occurred.");
