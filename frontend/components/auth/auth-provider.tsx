@@ -27,6 +27,21 @@ function extractRoles(token?: KeycloakTokenParsed | null): string[] {
   return realmAccess.roles.filter(Boolean);
 }
 
+function extractProfileFromToken(token?: KeycloakTokenParsed | null): KeycloakProfile | null {
+  if (!token) {
+    return null;
+  }
+
+  return {
+    id: token.sub,
+    username: token.preferred_username,
+    email: token.email,
+    firstName: token.given_name,
+    lastName: token.family_name,
+    emailVerified: token.email_verified,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [token, setToken] = useState<string | null>(null);
@@ -54,10 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles(extractRoles(keycloak.tokenParsed));
 
         if (authenticated) {
-          const loadedProfile = await keycloak.loadUserProfile();
-          if (active) {
-            setProfile(loadedProfile);
-          }
+          setProfile(extractProfileFromToken(keycloak.tokenParsed));
         }
       } catch {
         if (active) {
