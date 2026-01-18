@@ -1,5 +1,5 @@
 using Hypesoft.Application.DTOs;
-using Hypesoft.Application.Interfaces;
+using Hypesoft.Domain.Repositories;
 using Hypesoft.Application.Queries.Dashboard;
 using MediatR;
 using AutoMapper;
@@ -47,6 +47,7 @@ public sealed class GetDashboardSummaryHandler(IDashboardRepository dashboard, I
             summary.LowStockItems.Select(mapper.Map<ProductDto>).ToList(),
             summary.TopProducts.Select(mapper.Map<ProductDto>).ToList(),
             summary.RecentProducts.Select(mapper.Map<ProductDto>).ToList(),
+            summary.AllProducts.Select(mapper.Map<ProductDto>).ToList(),
             summary.Categories.Select(mapper.Map<CategoryDto>).ToList(),
             summary.CategoryCounts
                 .OrderByDescending(item => item.Count)

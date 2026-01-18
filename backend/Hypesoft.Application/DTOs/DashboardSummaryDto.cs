@@ -7,6 +7,7 @@ public sealed record DashboardSummaryDto(
     IReadOnlyList<ProductDto> LowStockItems,
     IReadOnlyList<ProductDto> TopProducts,
     IReadOnlyList<ProductDto> RecentProducts,
+    IReadOnlyList<ProductDto> Products,
     IReadOnlyList<CategoryDto> Categories,
     IReadOnlyList<CategoryChartItemDto> CategoryChart,
     IReadOnlyList<DashboardTrendPointDto> Trend);

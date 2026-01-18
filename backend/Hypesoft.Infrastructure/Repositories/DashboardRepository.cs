@@ -1,4 +1,4 @@
-using Hypesoft.Application.Interfaces;
+using Hypesoft.Domain.Repositories;
 using Hypesoft.Domain.Entities;
 using Hypesoft.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +53,10 @@ public sealed class DashboardRepository(HypesoftDbContext db) : IDashboardReposi
             .Select(product => product.CategoryId)
             .ToListAsync(ct);
 
+        var allProducts = await products
+            .OrderBy(product => product.Name)
+            .ToListAsync(ct);
+
         var categoryCounts = categoryCountSeed
             .GroupBy(categoryId => categoryId)
             .Select(group => new CategoryCountSnapshot(
@@ -87,6 +91,7 @@ public sealed class DashboardRepository(HypesoftDbContext db) : IDashboardReposi
             lowStockItems,
             topProducts,
             recentProducts,
+            allProducts,
             categorySnapshots,
             categoryCounts,
             trend);
