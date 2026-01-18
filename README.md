@@ -10,6 +10,12 @@ Sistema de gestao de produtos com dashboard, controle de estoque e categorias.
 - **Observability:** Prometheus, Grafana
 - **Proxy:** Nginx
 
+## Features Especiais da Aplicação Que Eu Gostaria de Destacar
+- [x] Roles Avançadas (Admin,User)
+- [x] Rate Limiting (60 requests por segundo, depois dá 429)
+- [x] Observabilidade e Alertas  
+- [x] Internationalization ou conhecido como i18n (Somente português e inglês) 
+
 ## Rodando com Docker
 
 ```bash
