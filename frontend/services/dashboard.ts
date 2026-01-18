@@ -22,6 +22,8 @@ type ApiDashboardSummary = {
   CategoryChart?: ApiChartItem[];
   trend?: ApiTrendPoint[];
   Trend?: ApiTrendPoint[];
+  products?: ApiProduct[];
+  Products?: ApiProduct[];
 };
 
 type ApiProduct = {
@@ -104,6 +106,7 @@ export function getDashboardSummary(token: string | null) {
       recentProducts: (payload.recentProducts ?? payload.RecentProducts ?? []).map(
         normalizeProduct,
       ),
+      products: (payload.products ?? payload.Products ?? []).map(normalizeProduct),
       categories: (payload.categories ?? payload.Categories ?? []).map(normalizeCategory),
       categoryChart: (payload.categoryChart ?? payload.CategoryChart ?? []).map(
         normalizeChartItem,
@@ -113,4 +116,26 @@ export function getDashboardSummary(token: string | null) {
 
     return summary;
   });
+}
+
+// KPI endpoints for accurate counts regardless of pagination
+export function getKpiTotalProducts(token: string | null) {
+  return apiFetch<number>("/api/dashboard/kpi/total-products", { token });
+}
+
+export function getKpiStockValue(token: string | null) {
+  return apiFetch<number>("/api/dashboard/kpi/stock-value", { token });
+}
+
+export function getKpiLowStockCount(token: string | null, threshold = 10) {
+  return apiFetch<number>("/api/dashboard/kpi/low-stock-count", {
+    token,
+    params: { threshold },
+  });
+}
+
+export function getKpiCategoryChart(token: string | null) {
+  return apiFetch<ApiChartItem[]>("/api/dashboard/kpi/category-chart", { token }).then(
+    (items) => (items ?? []).map(normalizeChartItem),
+  );
 }

@@ -19,6 +19,7 @@ export type DashboardSummary = {
   lowStockItems: Product[];
   topProducts: Product[];
   recentProducts: Product[];
+  products: Product[];
   categories: Category[];
   categoryChart: DashboardChartItem[];
   trend: DashboardTrendPoint[];

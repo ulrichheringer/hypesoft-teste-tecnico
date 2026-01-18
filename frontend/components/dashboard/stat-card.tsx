@@ -6,7 +6,6 @@ type StatCardProps = {
   title: string;
   value: string;
   delta: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
   tone?: "primary" | "success" | "warning" | "info";
 };
 
@@ -17,17 +16,12 @@ const toneStyles: Record<NonNullable<StatCardProps["tone"]>, string> = {
   info: "bg-sky-100 text-sky-600",
 };
 
-export function StatCard({ title, value, delta, icon: Icon, tone = "primary" }: StatCardProps) {
+export function StatCard({ title, value, delta, tone = "primary" }: StatCardProps) {
   const isNegative = delta.trim().startsWith("-");
   return (
     <Card className="rounded-2xl border border-border bg-white/95 shadow-sm">
-      <CardContent className="space-y-4 p-5">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <span className={cn("rounded-2xl p-2", toneStyles[tone])}>
-            <Icon size={18} />
-          </span>
-        </div>
+      <CardContent className="space-y-1 pr-3 pb-2 pt-2">
+        <p className="text-m font-medium leading-tight text-muted-foreground">{title}</p>
         <div className="space-y-1">
           <p className="font-display text-2xl font-semibold text-foreground">{value}</p>
           <div

@@ -3,7 +3,13 @@ import type { FocusEvent } from "react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,7 +18,9 @@ const stockSchema = z.object({
   stock: z.coerce.number().int().min(0, "Informe um estoque valido."),
 });
 
-type StockValues = z.infer<typeof stockSchema>;
+type StockSchema = typeof stockSchema;
+type StockInput = z.input<StockSchema>;
+type StockValues = z.output<StockSchema>;
 
 type StockDialogProps = {
   open: boolean;
@@ -27,9 +35,9 @@ export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: Stoc
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<StockValues>({
+  } = useForm<StockInput, unknown, StockValues>({
     resolver: zodResolver(stockSchema),
-    defaultValues: { stock: defaultStock },
+    defaultValues: { stock: defaultStock } satisfies StockInput,
     mode: "onChange",
     reValidateMode: "onChange",
   });
@@ -49,6 +57,9 @@ export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: Stoc
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">Atualizar estoque</DialogTitle>
+          <DialogDescription className="sr-only">
+            Informe a nova quantidade em estoque para o produto selecionado.
+          </DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-2">
@@ -61,7 +72,11 @@ export function StockDialog({ open, onOpenChange, defaultStock, onSubmit }: Stoc
                   id="stock"
                   inputMode="numeric"
                   className="text-right tabular-nums"
-                  value={field.value ?? 0}
+                  value={
+                    typeof field.value === "number" && Number.isFinite(field.value)
+                      ? field.value.toString()
+                      : "0"
+                  }
                   onFocus={handleSelectAll}
                   onChange={(event) => {
                     const next = normalizeStock(event.target.value);

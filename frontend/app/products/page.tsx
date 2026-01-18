@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import type { Product } from "@/types/product";
 
 export default function ProductsPage() {
   const { token, hasRole } = useAuth();
+  const router = useRouter();
   const { t } = useI18n();
   const canEdit = hasRole("admin");
   const queryClient = useQueryClient();
@@ -42,6 +43,12 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState(searchParam);
   const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!canEdit) {
+      router.replace("/");
+    }
+  }, [canEdit, router]);
 
   useEffect(() => {
     setSearch(searchParam);

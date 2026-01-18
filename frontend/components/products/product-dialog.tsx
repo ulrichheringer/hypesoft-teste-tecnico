@@ -1,4 +1,10 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Category } from "@/types/category";
 import type { Product } from "@/types/product";
 import { ProductForm, type ProductFormValues } from "@/components/products/product-form";
@@ -41,6 +47,10 @@ export function ProductDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">{title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {product ? "Editar produto" : "Criar produto"} com nome, descricao, preco, estoque e
+            categoria.
+          </DialogDescription>
         </DialogHeader>
         <ProductForm
           categories={categories}

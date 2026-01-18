@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import type { Category } from "@/types/category";
 
 export default function CategoriesPage() {
   const { token, hasRole } = useAuth();
+  const router = useRouter();
   const { t } = useI18n();
   const canEdit = hasRole("admin");
   const queryClient = useQueryClient();
@@ -27,6 +28,12 @@ export default function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState(searchParam);
+
+  useEffect(() => {
+    if (!canEdit) {
+      router.replace("/");
+    }
+  }, [canEdit, router]);
 
   useEffect(() => {
     setSearch(searchParam);

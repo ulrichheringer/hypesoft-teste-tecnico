@@ -6,8 +6,7 @@ export const messages = {
   "pt-BR": {
     "dashboard.title": "Dashboard",
     "dashboard.subtitle": "Acompanhe indicadores e mantenha o estoque sob controle.",
-    "dashboard.filter": "Filtrar",
-    "dashboard.dateRange": "Maio 6 - Junho 6",
+    "dashboard.dateRange": "Últimos 30 dias",
     "dashboard.exportPdf": "Exportar PDF",
     "dashboard.stat.totalProducts": "Total de produtos",
     "dashboard.stat.stockValue": "Valor do estoque",
@@ -62,12 +61,25 @@ export const messages = {
     "search.empty": "Nenhum resultado encontrado.",
     "search.loading": "Buscando...",
     "search.label": "Busca geral",
+    "help.title": "Ajuda",
+    "help.subtitle": "Encontre respostas rapidas para as tarefas mais comuns.",
+    "help.faq.product": "Como cadastrar um produto?",
+    "help.faq.product.desc":
+      "Acesse Produtos, clique em Novo produto e preencha nome, preco, estoque e categoria.",
+    "help.faq.stock": "Como ajustar o estoque?",
+    "help.faq.stock.desc":
+      "Abra o menu do produto na tabela e selecione Atualizar estoque para informar o novo valor.",
+    "help.faq.category": "Como criar categorias?",
+    "help.faq.category.desc":
+      "Entre em Categorias, clique em Nova categoria e informe um nome para o grupo.",
+    "help.support.title": "Precisa de suporte?",
+    "help.support.line1": "Entre em contato com a equipe em suporte@hypesoft.com.",
+    "help.support.line2": "Horario de atendimento: seg a sex, 9h as 18h.",
   },
   "en-US": {
     "dashboard.title": "Dashboard",
     "dashboard.subtitle": "Track key indicators and keep stock under control.",
-    "dashboard.filter": "Filter",
-    "dashboard.dateRange": "May 6 - June 6",
+    "dashboard.dateRange": "Last 30 days",
     "dashboard.exportPdf": "Export PDF",
     "dashboard.stat.totalProducts": "Total products",
     "dashboard.stat.stockValue": "Stock value",
@@ -122,6 +134,20 @@ export const messages = {
     "search.empty": "No results found.",
     "search.loading": "Searching...",
     "search.label": "Global search",
+    "help.title": "Help",
+    "help.subtitle": "Find quick answers for common tasks.",
+    "help.faq.product": "How to register a product?",
+    "help.faq.product.desc":
+      "Go to Products, click New product, and fill in name, price, stock, and category.",
+    "help.faq.stock": "How to adjust stock?",
+    "help.faq.stock.desc":
+      "Open the product menu in the table and select Update stock to set the new value.",
+    "help.faq.category": "How to create categories?",
+    "help.faq.category.desc":
+      "Go to Categories, click New category, and provide a name for the group.",
+    "help.support.title": "Need support?",
+    "help.support.line1": "Contact the team at suporte@hypesoft.com.",
+    "help.support.line2": "Support hours: Mon-Fri, 9am to 6pm.",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

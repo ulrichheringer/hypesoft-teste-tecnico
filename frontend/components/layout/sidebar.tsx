@@ -5,11 +5,22 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { cn } from "@/lib/utils";
 import { brand, navSections } from "@/components/layout/nav-data";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const { hasRole } = useAuth();
   const BrandIcon = brand.icon;
+
+  const visibleSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) => !item.requiredRole || hasRole(item.requiredRole),
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <aside className="flex h-full w-full flex-col gap-6 rounded-2xl border border-sidebar-border bg-sidebar px-5 py-6 shadow-sm">
@@ -26,7 +37,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-6">
-        {navSections.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.labelKey} className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
               {t(section.labelKey)}

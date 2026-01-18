@@ -1,44 +1,45 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-const faqs = [
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/components/i18n/i18n-provider";
+import type { MessageKey } from "@/lib/i18n";
+
+const faqs: Array<{ titleKey: MessageKey; descriptionKey: MessageKey }> = [
   {
-    title: "Como cadastrar um produto?",
-    description:
-      "Acesse Produtos, clique em Novo produto e preencha nome, preco, estoque e categoria.",
+    titleKey: "help.faq.product",
+    descriptionKey: "help.faq.product.desc",
   },
   {
-    title: "Como ajustar o estoque?",
-    description:
-      "Abra o menu do produto na tabela e selecione Atualizar estoque para informar o novo valor.",
+    titleKey: "help.faq.stock",
+    descriptionKey: "help.faq.stock.desc",
   },
   {
-    title: "Como criar categorias?",
-    description:
-      "Entre em Categorias, clique em Nova categoria e informe um nome para o grupo.",
+    titleKey: "help.faq.category",
+    descriptionKey: "help.faq.category.desc",
   },
 ];
 
 export default function HelpPage() {
+  const { t } = useI18n();
+
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <p className="font-display text-2xl font-semibold text-foreground">Ajuda</p>
-        <p className="text-sm text-muted-foreground">
-          Encontre respostas rapidas para as tarefas mais comuns.
-        </p>
+        <p className="font-display text-2xl font-semibold text-foreground">{t("help.title")}</p>
+        <p className="text-sm text-muted-foreground">{t("help.subtitle")}</p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
         {faqs.map((item) => (
           <Card
-            key={item.title}
+            key={item.titleKey}
             className="rounded-2xl border border-border bg-white/95 shadow-sm"
           >
             <CardHeader>
-              <CardTitle className="font-display text-base">{item.title}</CardTitle>
+              <CardTitle className="font-display text-base">{t(item.titleKey)}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              {item.description}
+              {t(item.descriptionKey)}
             </CardContent>
           </Card>
         ))}
@@ -46,11 +47,11 @@ export default function HelpPage() {
 
       <Card className="rounded-2xl border border-border bg-white/95 shadow-sm">
         <CardHeader>
-          <CardTitle className="font-display text-base">Precisa de suporte?</CardTitle>
+          <CardTitle className="font-display text-base">{t("help.support.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>Entre em contato com a equipe em suporte@hypesoft.com.</p>
-          <p>Horario de atendimento: seg a sex, 9h as 18h.</p>
+          <p>{t("help.support.line1")}</p>
+          <p>{t("help.support.line2")}</p>
         </CardContent>
       </Card>
     </section>

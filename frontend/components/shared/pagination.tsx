@@ -33,6 +33,7 @@ export function Pagination({
           variant="outline"
           size="icon"
           className="rounded-xl"
+          aria-label="Pagina anterior"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
         >
@@ -42,6 +43,7 @@ export function Pagination({
           variant="outline"
           size="icon"
           className="rounded-xl"
+          aria-label="Pagina seguinte"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
         >

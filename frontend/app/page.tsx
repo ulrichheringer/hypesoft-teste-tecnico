@@ -9,7 +9,13 @@ import { RecentProductsTable } from "@/components/dashboard/recent-products-tabl
 import { CategoryChartCard } from "@/components/dashboard/category-chart-card";
 import { InsightsCard } from "@/components/dashboard/insights-card";
 import { Button } from "@/components/ui/button";
-import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
+import {
+  useDashboardSummary,
+  useKpiTotalProducts,
+  useKpiStockValue,
+  useKpiLowStockCount,
+  useKpiCategoryChart,
+} from "@/hooks/use-dashboard-summary";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,12 +51,26 @@ const formatCurrency = (value: number, locale: string) =>
 export default function DashboardPage() {
   const summaryQuery = useDashboardSummary();
   const summary = summaryQuery.data;
+
+  // Use dedicated KPI endpoints for accurate counts
+  const totalProductsQuery = useKpiTotalProducts();
+  const stockValueQuery = useKpiStockValue();
+  const lowStockCountQuery = useKpiLowStockCount();
+  const categoryChartQuery = useKpiCategoryChart();
+
   const { locale, t } = useI18n();
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const [exporting, setExporting] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const dateRangeLabel = useMemo(() => {
+    const now = new Date();
+    const start = new Date();
+    start.setDate(now.getDate() - 29);
+    const formatter = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
+    return `${formatter.format(start)} - ${formatter.format(now)}`;
+  }, [locale]);
 
   const categoryMap = useMemo(() => {
     const categories = summary?.categories ?? [];
@@ -60,15 +80,16 @@ export default function DashboardPage() {
     }, {});
   }, [summary?.categories]);
 
-  const totalProducts = summary?.totalProducts ?? 0;
-  const stockValue = summary?.stockValue ?? 0;
-  const lowStockCount = summary?.lowStockCount ?? summary?.lowStockItems.length ?? 0;
+  // Use KPI endpoints for accurate values, fallback to summary
+  const totalProducts = totalProductsQuery.data ?? summary?.totalProducts ?? 0;
+  const stockValue = stockValueQuery.data ?? summary?.stockValue ?? 0;
+  const lowStockCount = lowStockCountQuery.data ?? summary?.lowStockCount ?? summary?.lowStockItems.length ?? 0;
   const lowStock = summary?.lowStockItems ?? [];
   const recentProducts = summary?.recentProducts ?? [];
-  const categoryChart = summary?.categoryChart ?? [];
+  const categoryChart = categoryChartQuery.data ?? summary?.categoryChart ?? [];
   const insightData = summary?.trend ?? [];
 
-  const isLoading = summaryQuery.isLoading;
+  const isLoading = summaryQuery.isLoading && totalProductsQuery.isLoading;
   const stockValueLabel = isLoading ? "--" : formatCurrency(stockValue, locale);
 
   const stockMutation = useMutation({
@@ -81,6 +102,10 @@ export default function DashboardPage() {
     onSuccess: () => {
       toast.success("Estoque atualizado.");
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["kpi-total-products"] });
+      queryClient.invalidateQueries({ queryKey: ["kpi-stock-value"] });
+      queryClient.invalidateQueries({ queryKey: ["kpi-low-stock-count"] });
+      queryClient.invalidateQueries({ queryKey: ["kpi-category-chart"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setStockOpen(false);
       setActiveProduct(null);
@@ -118,9 +143,8 @@ export default function DashboardPage() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" className="rounded-xl">
-            {t("dashboard.dateRange")}
+            {dateRangeLabel}
           </Button>
-          <Button className="rounded-xl">{t("dashboard.filter")}</Button>
           <Button
             variant="outline"
             className="rounded-xl"
@@ -138,7 +162,6 @@ export default function DashboardPage() {
             title={t("dashboard.stat.totalProducts")}
             value={isLoading ? "--" : totalProducts.toString()}
             delta="+12%"
-            icon={Boxes}
             tone="primary"
           />
         </div>
@@ -147,7 +170,6 @@ export default function DashboardPage() {
             title={t("dashboard.stat.stockValue")}
             value={stockValueLabel}
             delta="+6%"
-            icon={CircleDollarSign}
             tone="success"
           />
         </div>
@@ -156,7 +178,6 @@ export default function DashboardPage() {
             title={t("dashboard.stat.lowStock")}
             value={isLoading ? "--" : lowStockCount.toString()}
             delta="-3%"
-            icon={PackageCheck}
             tone="warning"
           />
         </div>

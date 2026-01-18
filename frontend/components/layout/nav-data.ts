@@ -13,6 +13,7 @@ type NavItem = {
   href: string;
   icon: LucideIcon;
   disabled?: boolean;
+  requiredRole?: "admin";
 };
 
 type NavSection = {
@@ -38,11 +39,13 @@ export const navSections: NavSection[] = [
         labelKey: "nav.products",
         href: "/products",
         icon: Package,
+        requiredRole: "admin",
       },
       {
         labelKey: "nav.categories",
         href: "/categories",
         icon: Shapes,
+        requiredRole: "admin",
       },
     ],
   },

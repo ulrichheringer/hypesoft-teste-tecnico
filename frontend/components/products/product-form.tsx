@@ -26,7 +26,9 @@ const productSchema = z.object({
   categoryId: z.string().min(1, "Selecione uma categoria."),
 });
 
-export type ProductFormValues = z.infer<typeof productSchema>;
+type ProductFormSchema = typeof productSchema;
+type ProductFormInput = z.input<ProductFormSchema>;
+export type ProductFormValues = z.output<ProductFormSchema>;
 
 type ProductFormProps = {
   categories: Category[];
@@ -65,9 +67,9 @@ export function ProductForm({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ProductFormValues>({
+  } = useForm<ProductFormInput, unknown, ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: initialValues,
+    defaultValues: initialValues as ProductFormInput,
     mode: "onChange",
     reValidateMode: "onChange",
   });
@@ -83,7 +85,15 @@ export function ProductForm({
   const normalizeStock = (value: string) => value.replace(/[^\d]/g, "");
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+    <form
+      className="space-y-4"
+      onSubmit={handleSubmit((values) =>
+        onSubmit({
+          ...values,
+          description: values.description ?? "",
+        }),
+      )}
+    >
       <div className="grid gap-2">
         <Label htmlFor="name">Nome</Label>
         <Input id="name" placeholder="Ex: Jaqueta bomber" {...register("name")} />
@@ -112,8 +122,12 @@ export function ProductForm({
             render={({ field }) => (
               <CurrencyInput
                 id="price"
-                value={field.value}
-                onValueChange={field.onChange}
+                value={
+                  typeof field.value === "number" && Number.isFinite(field.value)
+                    ? field.value
+                    : 0
+                }
+                onValueChange={(next) => field.onChange(Number.isFinite(next) ? next : 0)}
                 onBlur={field.onBlur}
                 locale={locale}
                 placeholder="0,00"
@@ -134,7 +148,11 @@ export function ProductForm({
                 inputMode="numeric"
                 placeholder="0"
                 className="text-right tabular-nums"
-                value={field.value ?? 0}
+                value={
+                  typeof field.value === "number" && Number.isFinite(field.value)
+                    ? field.value.toString()
+                    : "0"
+                }
                 onFocus={handleSelectAll}
                 onChange={(event) => {
                   const next = normalizeStock(event.target.value);
